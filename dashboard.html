@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Future Center | Admin Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#17243d}
+header{background:#102d55;color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+.brand{font-size:21px;font-weight:800}.brand small{display:block;font-size:12px;color:#ff8a24;margin-top:3px}
+main{max-width:1100px;margin:auto;padding:22px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 5px 20px #102d5512;border:1px solid #e7edf5}
+.stat{font-size:30px;font-weight:800;margin-top:8px}.label{color:#718096;font-size:13px}
+h1{margin:0 0 6px;font-size:28px}.sub{color:#667085;margin:0 0 24px}
+.section{margin-top:22px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+button{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.primary{background:#ff7b1a;color:#fff}.secondary{background:#eaf0f8;color:#17345d}
+input,select{width:100%;padding:12px;border:1px solid #d6deea;border-radius:10px;font-size:15px;margin-top:6px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}
+.course{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:15px;border:1px solid #e5eaf1;border-radius:12px;margin-bottom:10px}
+.course strong{display:block}.course small{color:#7b8798}
+.status{padding:8px 11px;border-radius:9px;font-size:12px;font-weight:700;background:#eef3f9}
+.ok{background:#e8f7ee;color:#167344}.bad{background:#fff0ef;color:#b42318}
+.hidden{display:none}.empty{text-align:center;color:#7a8799;padding:25px}
+nav{display:flex;gap:8px;overflow:auto;margin-bottom:20px}nav button{white-space:nowrap}
+@media(max-width:650px){main{padding:15px}.form{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Future Center<small>Admin Dashboard · Dr. Sherif Rady</small></div>
+  <span id="connection" class="status">Connecting...</span>
+</header>
+
+<main>
+  <h1>Dashboard</h1>
+  <p class="sub">Manage the educational platform from one place.</p>
+
+  <nav>
+    <button class="primary" onclick="showSection('overview')">Overview</button>
+    <button class="secondary" onclick="showSection('courses')">Courses</button>
+    <button class="secondary" onclick="showSection('lectures')">Lectures</button>
+    <button class="secondary" onclick="showSection('students')">Students</button>
+  </nav>
+
+  <section id="overview">
+    <div class="grid">
+      <div class="card"><div class="label">Public Courses</div><div id="courseCount" class="stat">—</div></div>
+      <div class="card"><div class="label">Public Lectures</div><div id="lectureCount" class="stat">—</div></div>
+      <div class="card"><div class="label">Connection</div><div id="connectionText" class="stat" style="font-size:20px">Checking...</div></div>
+    </div>
+  </section>
+
+  <section id="courses" class="section hidden">
+    <div class="section-head"><h2>Courses</h2><button class="primary" onclick="toggleAdd()">+ Add Course</button></div>
+    <div id="addBox" class="card hidden">
+      <div class="form">
+        <label class="full">Course name<input id="courseName" placeholder="e.g. Organic Chemistry"></label>
+        <label>Course code<input id="courseCode" placeholder="e.g. ORG101"></label>
+        <label>Stage ID<input id="stageId" type="number" placeholder="Stage ID"></label>
+        <label><input id="courseActive" type="checkbox" checked style="width:auto"> Active</label>
+        <label><input id="coursePublic" type="checkbox" checked style="width:auto"> Public</label>
+        <div class="full"><button class="primary" onclick="addCourse()">Save Course</button></div>
+      </div>
+    </div>
+    <div id="courseList" class="card" style="margin-top:12px">Loading...</div>
+  </section>
+
+  <section id="lectures" class="section hidden">
+    <div class="card">
+      <h2>Lectures</h2>
+      <p class="sub">Lectures will be managed here after the course workflow is connected.</p>
+    </div>
+  </section>
+
+  <section id="students" class="section hidden">
+    <div class="card">
+      <h2>Students</h2>
+      <p class="sub">Student accounts and subscriptions will be added in the next stage.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL="https://opjitbtxedlvkncsgkbo.supabase.co";
+const SUPABASE_KEY="sb_publishable_NBNUmKVlEqyGlGHdBq5_-g_0axjtwla";
+const H={"apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json"};
+
+async function api(table, options={}){
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${options.query||""}`,{
+    method:options.method||"GET",headers:H,body:options.body?JSON.stringify(options.body):undefined
+  });
+  const t=await r.text();
+  if(!r.ok) throw new Error(`${r.status}: ${t}`);
+  return t?JSON.parse(t):null;
+}
+
+function showSection(id){
+  ["overview","courses","lectures","students"].forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id));
+  if(id==="courses") loadCourses();
+}
+
+async function loadCourses(){
+  const box=document.getElementById("courseList");
+  try{
+    const data=await api("courses",{query:"?select=id,name,code,active,is_public,stage_id&order=id.asc"});
+    document.getElementById("courseCount").textContent=data.length;
+    box.innerHTML=data.length?data.map(c=>`
+      <div class="course">
+        <div><strong>${esc(c.name)}</strong><small>${esc(c.code||"No code")} · Stage ${c.stage_id??"—"}</small></div>
+        <span class="status ${c.is_public&&c.active?"ok":""}">${c.is_public&&c.active?"Public":"Hidden"}</span>
+      </div>`).join(""):'<div class="empty">No courses found.</div>';
+  }catch(e){box.innerHTML=`<div class="empty">Could not load courses.<br><small>${esc(e.message)}</small></div>`}
+}
+
+async function testConnection(){
+  try{
+    await api("courses",{query:"?select=id&limit=1"});
+    document.getElementById("connection").textContent="Connected";
+    document.getElementById("connection").className="status ok";
+    document.getElementById("connectionText").textContent="Connected";
+    await loadCounts();
+  }catch(e){
+    document.getElementById("connection").textContent="Check API / RLS";
+    document.getElementById("connection").className="status bad";
+    document.getElementById("connectionText").textContent="Needs setup";
+    console.error(e);
+  }
+}
+
+async function loadCounts(){
+  try{
+    const lectures=await api("lectures",{query:"?select=id&is_public=eq.true&active=eq.true"});
+    document.getElementById("lectureCount").textContent=lectures.length;
+  }catch(e){document.getElementById("lectureCount").textContent="—"}
+  try{
+    const courses=await api("courses",{query:"?select=id&is_public=eq.true&active=eq.true"});
+    document.getElementById("courseCount").textContent=courses.length;
+  }catch(e){}
+}
+
+async function addCourse(){
+  const name=document.getElementById("courseName").value.trim();
+  const code=document.getElementById("courseCode").value.trim()||null;
+  const stageId=document.getElementById("stageId").value;
+  if(!name||!stageId){alert("اكتب اسم المادة و Stage ID");return}
+  try{
+    await api("courses",{method:"POST",query:"?select=id,name,code,stage_id,active,is_public",body:{
+      name,code,stage_id:Number(stageId),
+      active:document.getElementById("courseActive").checked,
+      is_public:document.getElementById("coursePublic").checked
+    }});
+    alert("Course added successfully");
+    document.getElementById("courseName").value="";
+    document.getElementById("courseCode").value="";
+    document.getElementById("stageId").value="";
+    await loadCourses();
+  }catch(e){alert("لم تتم الإضافة. غالبًا نحتاج Policy للـINSERT في جدول courses.\\n\\n"+e.message)}
+}
+
+function toggleAdd(){document.getElementById("addBox").classList.toggle("hidden")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+testConnection();
+</script>
+</body>
+</html>
