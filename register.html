@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>إنشاء حساب — Future Center</title><link rel="stylesheet" href="auth.css"></head>
+<body><main class="auth-wrap"><section class="card auth-card">
+<div class="auth-head"><div class="brand">FUTURE <span>CENTER</span></div>
+<h1>إنشاء حساب طالب</h1><p>الحساب مجاني. تفعيل المواد يتم لاحقًا من إدارة المنصة.</p></div>
+<form id="form" class="form">
+<div class="field"><label for="name">الاسم بالكامل</label><input class="input" id="name" placeholder="اكتب اسمك بالكامل" required autocomplete="name"></div>
+<div class="field"><label for="phone">رقم الهاتف</label><input class="input" id="phone" placeholder="01xxxxxxxxx" required autocomplete="tel"></div>
+<div class="field"><label for="email">البريد الإلكتروني</label><input class="input" id="email" type="email" placeholder="example@email.com" required autocomplete="email"></div>
+<div class="field"><label for="password">كلمة المرور</label><input class="input" id="password" type="password" minlength="6" placeholder="6 أحرف أو أكثر" required autocomplete="new-password"></div>
+<button class="gold submit" type="submit">حفظ ومتابعة</button></form>
+<div id="msg" class="msg"></div>
+<div class="help-links"><a href="login.html">لدي حساب بالفعل</a><a href="reset.html">نسيت كلمة المرور؟</a></div>
+<a class="back" href="index.html">← العودة إلى المنصة</a>
+<div class="note">لن يتم عرض كلمة المرور للإدارة. استعادة الحساب تتم من خلال البريد الإلكتروني.</div>
+</section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const sb=supabase.createClient(FC_CONFIG.supabaseUrl,FC_CONFIG.supabaseKey);
+const formEl=document.getElementById('form'), msgEl=document.getElementById('msg');
+function msg(t,c=''){msgEl.textContent=t;msgEl.className='msg show '+c}
+formEl.addEventListener('submit',async e=>{
+ e.preventDefault(); msg('جاري إنشاء الحساب...');
+ const {data,error}=await sb.auth.signUp({email:email.value.trim(),password:password.value,options:{data:{full_name:name.value.trim(),phone:phone.value.trim()}}});
+ if(error){msg(error.message,'error');return}
+ if(data.session){
+   const {error:pe}=await sb.from('students').upsert({id:data.user.id,auth_user_id:data.user.id,full_name:name.value.trim(),phone:phone.value.trim(),email:email.value.trim()},{onConflict:'id'});
+   if(pe){msg('تم إنشاء الحساب لكن تعذر حفظ بيانات الملف الشخصي: '+pe.message,'error');return}
+   location.href='student.html';
+ }else{
+   msg('تم إنشاء الحساب. راجع بريدك الإلكتروني لتأكيد الحساب ثم سجّل الدخول.','success');
+   formEl.reset();
+ }
+});
+</script>
+
+</body></html>

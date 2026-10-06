@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>حسابي — Future Center</title><link rel="stylesheet" href="auth.css"></head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <div class="brand">FUTURE <span>CENTER</span></div>
+  <div class="top-actions"><a class="ghost" href="index.html">الرئيسية</a><button class="ghost" id="logout">تسجيل الخروج</button></div>
+</header>
+<section class="card dashboard-head">
+  <div class="eyebrow">STUDENT AREA</div>
+  <div class="profile-line"><div><h1 id="hello">حساب الطالب</h1><p id="email" class="muted">جاري التحميل...</p><div id="pills" class="profile-meta"></div></div></div>
+  <div id="msg" class="msg"></div>
+</section>
+<section class="card content-section">
+  <div class="section-title"><h2>ابدأ رحلتك التعليمية</h2><span>اختر بالترتيب</span></div>
+  <div class="path-grid">
+    <div class="path-card card"><span class="icon">🌍</span><h3>الدولة</h3><select id="country" class="select"><option value="">اختر الدولة</option></select></div>
+    <div class="path-card card"><span class="icon">🏫</span><h3>الجامعة</h3><select id="university" class="select" disabled><option value="">اختر الجامعة</option></select></div>
+    <div class="path-card card"><span class="icon">🎓</span><h3>المرحلة</h3><select id="stage" class="select" disabled><option value="">اختر المرحلة</option></select></div>
+    <div class="path-card card"><span class="icon">📚</span><h3>المادة</h3><select id="course" class="select" disabled><option value="">اختر المادة</option></select></div>
+  </div>
+</section>
+<section class="card content-section">
+  <div class="section-title"><h2>المحاضرات</h2><span>المتاح لك يظهر هنا</span></div>
+  <div id="lectures" class="lecture-grid"><div class="empty">اختر الدولة والجامعة والمرحلة والمادة لعرض المحاضرات.</div></div>
+</section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const sb=supabase.createClient(FC_CONFIG.supabaseUrl,FC_CONFIG.supabaseKey);
+const $=id=>document.getElementById(id);
+let user;
+function show(t,c=''){ $('msg').textContent=t; $('msg').className='msg show '+c; }
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function reset(ids){ids.forEach(id=>{$(id).innerHTML='<option value="">اختر</option>';$(id).disabled=true})}
+async function init(){
+ const r=await sb.auth.getUser(); user=r.data.user;
+ if(!user){location.href='login.html';return}
+ $('email').textContent=user.email||'';
+ const {data:p}=await sb.from('students').select('*').eq('auth_user_id',user.id).maybeSingle();
+ $('hello').textContent='مرحبًا '+(p?.full_name||user.user_metadata?.full_name||'بك');
+ $('pills').innerHTML='<span class="pill">حساب مجاني</span><span class="pill">المواد المفعلة تظهر تلقائيًا</span>';
+ await loadCountries();
+}
+async function loadCountries(){
+ const {data,error}=await sb.from('countries').select('id,name,code').eq('active',true).order('name');
+ if(error){show(error.message,'error');return}
+ $('country').innerHTML='<option value="">اختر الدولة</option>'+(data||[]).map(x=>`<option value="${x.id}">${esc(x.name)}${x.code?' — '+esc(x.code):''}</option>`).join('');
+}
+$('country').onchange=async()=>{
+ reset(['university','stage','course']);$('lectures').innerHTML='<div class="empty">اختر الجامعة لعرض المراحل.</div>';
+ if(!$('country').value)return;
+ const {data,error}=await sb.from('universities').select('id,name,code').eq('country_id',$('country').value).eq('active',true).order('name');
+ if(error){show(error.message,'error');return}
+ $('university').innerHTML='<option value="">اختر الجامعة</option>'+(data||[]).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+ $('university').disabled=false;
+};
+$('university').onchange=async()=>{
+ reset(['stage','course']);$('lectures').innerHTML='<div class="empty">اختر المرحلة لعرض المواد.</div>';
+ if(!$('university').value)return;
+ const {data,error}=await sb.from('stages').select('id,name,code').eq('university_id',$('university').value).eq('active',true).order('name');
+ if(error){show(error.message,'error');return}
+ $('stage').innerHTML='<option value="">اختر المرحلة</option>'+(data||[]).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+ $('stage').disabled=false;
+};
+$('stage').onchange=async()=>{
+ reset(['course']);$('lectures').innerHTML='<div class="empty">اختر المادة لعرض المحاضرات.</div>';
+ if(!$('stage').value)return;
+ const {data,error}=await sb.from('courses').select('id,name,code,is_public').eq('stage_id',$('stage').value).eq('active',true).order('name');
+ if(error){show(error.message,'error');return}
+ $('course').innerHTML='<option value="">اختر المادة</option>'+(data||[]).map(x=>`<option value="${x.id}">${esc(x.name)}${x.is_public?'':' 🔒'}</option>`).join('');
+ $('course').disabled=false;
+};
+$('course').onchange=async()=>{
+ const id=$('course').value;
+ $('lectures').innerHTML='<div class="loading">جاري تحميل المحاضرات...</div>';
+ if(!id)return;
+ const {data,error}=await sb.from('lectures').select('id,title,description,lecture_number,is_public').eq('course_id',id).eq('active',true).order('lecture_number');
+ if(error){show(error.message,'error');$('lectures').innerHTML='<div class="empty">تعذر تحميل المحاضرات.</div>';return}
+ if(!data?.length){$('lectures').innerHTML='<div class="empty">لا توجد محاضرات متاحة حاليًا.</div>';return}
+ $('lectures').innerHTML=data.map(l=>{
+   const open=l.is_public;
+   return `<article class="card lecture-card"><span class="badge ${open?'':'locked'}">${open?'مفتوحة للجميع':'🔒 تحتاج اشتراكًا'}</span>
+   <h3>${l.lecture_number?esc(l.lecture_number)+' — ':''}${esc(l.title)}</h3><p>${esc(l.description||'')}</p>
+   ${open?`<a class="primary" href="lecture.html?id=${encodeURIComponent(l.id)}">فتح المحاضرة</a>`:`<span class="muted">هذه المحاضرة ستفتح بعد تفعيل اشتراكك.</span>`}</article>`;
+ }).join('');
+};
+$('logout').onclick=async()=>{await sb.auth.signOut();location.href='login.html'};
+init();
+</script>
+</body></html>

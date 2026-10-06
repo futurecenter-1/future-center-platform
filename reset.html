@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>استعادة كلمة المرور — Future Center</title><link rel="stylesheet" href="auth.css"></head>
+<body><main class="auth-wrap"><section class="card auth-card">
+<div class="auth-head"><div class="brand">FUTURE <span>CENTER</span></div>
+<h1>نسيت كلمة المرور؟</h1><p>اكتب إيميل حسابك وسنرسل لك رابطًا آمنًا لإعادة تعيين كلمة المرور.</p></div>
+<form id="form" class="form">
+<div class="field"><label for="email">البريد الإلكتروني</label><input class="input" id="email" type="email" placeholder="example@email.com" required autocomplete="email"></div>
+<button class="gold submit" type="submit">حفظ ومتابعة</button></form>
+<div id="msg" class="msg"></div>
+<div class="help-links"><a href="login.html">العودة لتسجيل الدخول</a></div>
+<a class="back" href="index.html">← العودة إلى المنصة</a>
+<div class="note">لو لم تجد الرسالة، راجع مجلد الرسائل غير المرغوب فيها.</div>
+</section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const sb=supabase.createClient(FC_CONFIG.supabaseUrl,FC_CONFIG.supabaseKey);
+const formEl=document.getElementById('form'), msgEl=document.getElementById('msg');
+function msg(t,c=''){msgEl.textContent=t;msgEl.className='msg show '+c}
+formEl.addEventListener('submit',async e=>{
+ e.preventDefault(); msg('جاري إرسال الرابط...');
+ const redirect=location.origin+location.pathname.replace('reset.html','update-password.html');
+ const {error}=await sb.auth.resetPasswordForEmail(email.value.trim(),{redirectTo:redirect});
+ if(error){msg('تعذر إرسال الرابط: '+error.message,'error');return}
+ msg('تم إرسال رابط إعادة تعيين كلمة المرور. راجع بريدك الإلكتروني.','success');
+});
+</script>
+
+</body></html>

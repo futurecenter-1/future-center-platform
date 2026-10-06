@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المحاضرة — Future Center</title><link rel="stylesheet" href="auth.css"></head>
+<body>
+<div class="shell">
+<header class="topbar"><div class="brand">FUTURE <span>CENTER</span></div><div class="top-actions"><a class="ghost" href="student.html">حسابي</a><a class="ghost" href="index.html">الرئيسية</a></div></header>
+<main id="main" class="card media-card">
+  <div class="eyebrow" style="color:var(--cyan2);font-size:12px;font-weight:800;letter-spacing:1px">LECTURE</div>
+  <h1 id="title" class="media-title">جاري التحميل...</h1>
+  <p id="desc" class="media-desc"></p>
+  <div id="media"></div>
+  <div id="files" class="files-list"></div>
+  <div id="err" class="msg error"></div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const sb=supabase.createClient(FC_CONFIG.supabaseUrl,FC_CONFIG.supabaseKey);
+const id=new URLSearchParams(location.search).get('id');
+const $=x=>document.getElementById(x);
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function err(t){$('err').textContent=t;$('err').className='msg show error';}
+async function run(){
+ if(!id){err('معرّف المحاضرة غير موجود.');return}
+ const {data:l,error:e}=await sb.from('lectures').select('*').eq('id',id).eq('active',true).maybeSingle();
+ if(e||!l){err('المحاضرة غير متاحة أو تحتاج إلى تفعيل الاشتراك.');return}
+ $('title').textContent=l.title;$('desc').textContent=l.description||'';
+ const {data:fs,error:fe}=await sb.from('lecture_files').select('*').eq('lecture_id',id).eq('active',true).order('id');
+ if(fe){err(fe.message);return}
+ const video=(fs||[]).find(f=>['video','mp4'].includes((f.file_type||'').toLowerCase())&&f.file_url);
+ const hls=(fs||[]).find(f=>['m3u8','hls'].includes((f.file_type||'').toLowerCase())&&f.file_url);
+ if(video){$('media').innerHTML=`<div class="video-wrap"><video class="video" controls controlsList="nodownload" playsinline src="${esc(video.file_url)}"></video></div>`}
+ else if(hls){$('media').innerHTML='<div class="empty">ملف HLS موجود. يحتاج مشغل HLS متوافقًا في هذه النسخة.</div>'}
+ const others=(fs||[]).filter(f=>f.file_url&&!['video','mp4','m3u8','hls'].includes((f.file_type||'').toLowerCase()));
+ if(others.length){$('files').innerHTML='<div class="section-title"><h2>ملفات المحاضرة</h2><span>المتاح لك</span></div>'+others.map(f=>`<div class="file-row"><span>${esc(f.title)}</span><a class="ghost" href="${esc(f.file_url)}" target="_blank" rel="noopener">فتح الملف</a></div>`).join('')}
+}
+run();
+</script>
+</body></html>
