@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>إنشاء حساب — Future Center</title><link rel="stylesheet" href="auth.css"></head>
+<body><main class="auth-wrap"><section class="card auth-card">
+<div class="auth-head"><div class="brand">FUTURE <span>CENTER</span></div>
+<h1>إنشاء حساب طالب</h1><p>الحساب مجاني. تفعيل المواد يتم لاحقًا من إدارة المنصة.</p></div>
+<form id="form" class="form">
+<div class="field"><label for="name">الاسم بالكامل</label><input class="input" id="name" placeholder="اكتب اسمك بالكامل" required autocomplete="name"></div>
+<div class="field"><label for="phone">رقم الهاتف</label><input class="input" id="phone" placeholder="01xxxxxxxxx" required autocomplete="tel"></div>
+<div class="field"><label for="email">البريد الإلكتروني</label><input class="input" id="email" type="email" placeholder="example@email.com" required autocomplete="email"></div>
+<div class="field"><label for="password">كلمة المرور</label><input class="input" id="password" type="password" minlength="6" placeholder="6 أحرف أو أكثر" required autocomplete="new-password"></div>
+<button class="gold submit" type="submit">حفظ ومتابعة</button></form>
+<div id="msg" class="msg"></div>
+<div class="help-links"><a href="login.html">لدي حساب بالفعل</a><a href="reset.html">نسيت كلمة المرور؟</a></div>
+<a class="back" href="index.html">← العودة إلى المنصة</a>
+<div class="note">لن يتم عرض كلمة المرور للإدارة. استعادة الحساب تتم من خلال البريد الإلكتروني.</div>
+</section></main>
+<script src="config.js"></script>
+<script>
+const formEl=document.getElementById('form'), msgEl=document.getElementById('msg');
+const nameEl=document.getElementById('name'), phoneEl=document.getElementById('phone'), emailEl=document.getElementById('email'), passwordEl=document.getElementById('password');
+function msg(t,c=''){msgEl.textContent=t;msgEl.className='msg show '+c}
+function withTimeout(promise,ms=15000){return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error('انتهت مهلة الاتصال بخادم التسجيل. تأكد من الإنترنت وحاول مرة أخرى.')),ms))])}
+async function registerStudent(){
+  const email=emailEl.value.trim(), password=passwordEl.value, fullName=nameEl.value.trim(), phone=phoneEl.value.trim();
+  if(!window.FC_CONFIG?.supabaseUrl || !window.FC_CONFIG?.supabaseKey) throw new Error('ملف إعدادات المنصة غير محمل (config.js).');
+  const base=FC_CONFIG.supabaseUrl.replace(/\/$/,'');
+  const headers={'Content-Type':'application/json','apikey':FC_CONFIG.supabaseKey};
+  const authRes=await withTimeout(fetch(base+'/auth/v1/signup',{method:'POST',headers,body:JSON.stringify({email,password,data:{full_name:fullName,phone}})}));
+  const authJson=await authRes.json().catch(()=>({}));
+  if(!authRes.ok){
+    const m=authJson?.msg||authJson?.message||authJson?.error_description||'تعذر إنشاء الحساب.';
+    throw new Error(m);
+  }
+  const user=authJson.user;
+  const accessToken=authJson.access_token;
+  if(accessToken && user?.id){
+    const dbRes=await withTimeout(fetch(base+'/rest/v1/students?on_conflict=id',{method:'POST',headers:{...headers,'Authorization':'Bearer '+accessToken,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:user.id,auth_user_id:user.id,full_name:fullName,phone,email})}));
+    if(!dbRes.ok){const t=await dbRes.text(); throw new Error('تم إنشاء الحساب لكن تعذر حفظ بيانات الطالب: '+(t||'خطأ في قاعدة البيانات'));}
+    location.href='student.html'; return;
+  }
+  msg('تم إنشاء الحساب بنجاح. افتح بريدك الإلكتروني واضغط رابط التأكيد، ثم سجّل الدخول.','success');
+  formEl.reset();
+}
+formEl.addEventListener('submit',async e=>{
+ e.preventDefault();
+ msg('جاري إنشاء الحساب...');
+ try{await registerStudent()}catch(err){msg(err?.message||'حدث خطأ غير معروف. حاول مرة أخرى.','error');console.error(err)}
+});
+</script>
+
+</body></html>
