@@ -52,12 +52,12 @@ $('form').addEventListener('submit',async e=>{
  const {data,error}=await sb.auth.signInWithPassword({email,password});
  if(error){showMsg('البريد الإلكتروني أو كلمة المرور غير صحيحة.','error');$('submit').disabled=false;return;}
  const u=data.user;
- const {data:p}=await sb.from('students').select('id').eq('auth_user_id',u.id).maybeSingle();
- if(!p){await sb.from('students').upsert({id:u.id,auth_user_id:u.id,full_name:u.user_metadata?.full_name||'',phone:u.user_metadata?.phone||'',email:u.email||''},{onConflict:'id'});}
- location.href='student.html';
+ // Unified login: let the main Future Center app detect student/lecturer/admin role.
+ // Do not create a student record here; staff accounts must remain staff-only.
+ location.href='index.html?v=20261008-4';
 });
 $('googleBtn').onclick=async()=>{
- const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+ const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname.replace('login.html','index.html')}});
  if(error) showMsg('تعذر بدء تسجيل الدخول بواسطة Google.','error');
 };
 </script>
