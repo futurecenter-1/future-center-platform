@@ -1,36 +1,64 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>تسجيل الدخول — Future Center</title><link rel="stylesheet" href="auth.css"></head>
-<body><main class="auth-wrap"><section class="card auth-card">
-<div class="auth-head"><div class="brand">FUTURE <span>CENTER</span></div>
-<h1>تسجيل دخول الطالب</h1><p>ادخل إلى حسابك للوصول إلى المواد والمحاضرات الخاصة بك.</p></div>
-<form id="form" class="form">
-<div class="field"><label for="email">البريد الإلكتروني</label><input class="input" id="email" type="email" placeholder="example@email.com" required autocomplete="email"></div>
-<div class="field"><label for="password">كلمة المرور</label><input class="input" id="password" type="password" placeholder="••••••••" required autocomplete="current-password"></div>
-<button class="gold submit" type="submit">حفظ ومتابعة</button></form>
-<div id="msg" class="msg"></div>
-<div class="help-links"><a href="register.html">إنشاء حساب جديد</a><a href="reset.html">نسيت كلمة المرور؟</a></div>
-<a class="back" href="index.html">← العودة إلى المنصة</a>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>تسجيل الدخول — Future Center</title>
+<link rel="stylesheet" href="../auth.css">
+<style>
+:root{--navy:#061728;--navy2:#0a2034;--gold:#f3b84b;--gold2:#ffd77c;--text:#f7f7f5;--muted:#c9d0d7;--line:rgba(255,255,255,.25)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Tahoma,Arial,sans-serif;background:#03111e;color:var(--text)}body{min-height:100svh;overflow-x:hidden}.scene{position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at 75% 12%,rgba(25,72,105,.65),transparent 30%),linear-gradient(145deg,#071a2c 0%,#061322 52%,#020b13 100%);overflow:hidden}.scene:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(1,8,15,.18),rgba(1,8,15,.45)),radial-gradient(circle at 50% 100%,rgba(243,184,75,.12),transparent 45%)}.orb{position:absolute;border-radius:50%;filter:blur(45px);opacity:.28}.orb-a{width:280px;height:280px;right:-70px;top:80px;background:#17496d}.orb-b{width:220px;height:220px;left:-70px;bottom:90px;background:#7c511d}.tower{position:absolute;right:9%;top:3%;width:115px;height:520px;opacity:.25;background:linear-gradient(90deg,transparent 0 15%,#a27b48 18% 22%,transparent 24% 36%,#a27b48 39% 43%,transparent 45% 57%,#8d673d 60% 64%,transparent 66%),linear-gradient(#24384b,#0b1a27);clip-path:polygon(38% 0,62% 0,70% 7%,74% 28%,100% 36%,91% 100%,9% 100%,0 36%,26% 28%,30% 7%)}.auth-page{width:min(430px,100%);min-height:100svh;margin:auto;padding:24px 18px 28px;display:flex;flex-direction:column;align-items:center}.brand-lockup{display:flex;align-items:center;gap:10px;margin:6px 0 18px}.brand-lockup img{width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(243,184,75,.25))}.brand-name{display:flex;flex-direction:column;line-height:.9;letter-spacing:3px;font-family:Georgia,serif;font-size:25px}.brand-name span{font-family:Tahoma,sans-serif;letter-spacing:7px;color:var(--gold);font-size:11px;text-align:center;margin-top:7px}.auth-panel{width:100%;padding:20px 18px 17px;border:1px solid rgba(255,255,255,.24);border-radius:30px;background:linear-gradient(135deg,rgba(46,55,64,.58),rgba(9,23,35,.68));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 24px 60px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.12)}.back-row{display:flex;justify-content:flex-start}.back-row a{width:42px;height:42px;border:1px solid rgba(255,255,255,.25);border-radius:50%;display:grid;place-items:center;color:#fff;text-decoration:none;font-size:32px;font-weight:300}.panel-head{text-align:center;padding:2px 0 17px}.user-badge{margin:0 auto 10px;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:rgba(243,184,75,.15);border:1px solid var(--gold);color:var(--gold);font-size:30px}.panel-head h1{margin:0 0 7px;font-size:26px}.panel-head p{margin:0;color:var(--muted);font-size:14px}.field{display:block;margin:12px 0}.field>span{display:block;margin:0 4px 7px;font-weight:700;font-size:14px}.input-wrap{position:relative}.input-wrap input{width:100%;height:54px;border:1px solid rgba(255,255,255,.34);border-radius:15px;background:rgba(7,19,31,.52);color:#fff;padding:0 48px 0 42px;outline:none;font-size:15px;text-align:right}.input-wrap input::placeholder{color:#9ca7b1}.input-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(243,184,75,.1)}.input-wrap>b{position:absolute;right:15px;top:16px;color:var(--gold);font-size:18px}.eye{position:absolute;left:9px;top:8px;height:38px;width:38px;border:0;background:transparent;color:#fff;font-size:17px}.form-meta{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin:10px 3px 17px}.form-meta a,.new-account a{color:var(--gold2);text-decoration:none}.remember{display:flex;gap:7px;align-items:center}.remember input{accent-color:var(--gold);width:17px;height:17px}.gold-btn,.google-btn{width:100%;height:55px;border-radius:16px;font-size:17px;font-weight:800;cursor:pointer}.gold-btn{border:1px solid var(--gold2);background:linear-gradient(135deg,#d99525,#ffd36e);color:#17110a;box-shadow:0 10px 28px rgba(243,184,75,.22)}.gold-btn span{font-size:24px;margin-right:8px}.gold-btn:disabled{opacity:.65;cursor:wait}.msg{min-height:20px;text-align:center;font-size:13px;margin:10px 0}.msg.error{color:#ffb4b4}.msg.show{display:block}.divider{display:flex;align-items:center;gap:10px;color:#d2d6db;font-size:12px;margin:7px 0 12px}.divider:before,.divider:after{content:"";height:1px;background:rgba(255,255,255,.35);flex:1}.google-btn{border:1px solid rgba(255,255,255,.34);background:rgba(4,16,27,.48);color:#fff}.g{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#fff;color:#4285f4;font-weight:900;margin-left:7px}.new-account{text-align:center;margin:16px 0 5px;color:#d8dde1;font-size:13px}.secure{text-align:center;margin:12px 0 0;color:#c2c9ce;font-size:11px}@media(max-width:360px){.auth-page{padding-inline:12px}.auth-panel{padding-inline:14px}.panel-head h1{font-size:23px}}
 
-</section></main>
+</style></head>
+<body>
+<div class="scene" aria-hidden="true"><div class="orb orb-a"></div><div class="orb orb-b"></div><div class="tower"></div></div>
+<main class="auth-page">
+  <header class="brand-lockup">
+    <img id="brandLogo" alt="Future Center">
+    <div class="brand-name"><b>FUTURE</b><span>CENTER</span></div>
+  </header>
+  <section class="auth-panel">
+    <div class="back-row"><a href="index.html" aria-label="العودة">‹</a></div>
+    <div class="panel-head">
+      <div class="user-badge" aria-hidden="true">♙</div>
+      <h1>تسجيل دخول الطالب</h1>
+      <p>ابدأ رحلتك التعليمية مع Future Center</p>
+    </div>
+    <form id="form" novalidate>
+      <label class="field"><span>البريد الإلكتروني</span><div class="input-wrap"><input id="email" type="email" inputmode="email" autocomplete="email" placeholder="أدخل البريد الإلكتروني"><b>✉</b></div></label>
+      <label class="field"><span>كلمة المرور</span><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="أدخل كلمة المرور"><button type="button" class="eye" id="togglePass" aria-label="إظهار كلمة المرور">◉</button><b>⌁</b></div></label>
+      <div class="form-meta"><label class="remember"><input id="remember" type="checkbox"><span>تذكرني</span></label><a href="reset.html">نسيت كلمة المرور؟</a></div>
+      <button class="gold-btn" id="submit" type="submit">تسجيل الدخول <span>↩</span></button>
+    </form>
+    <div id="msg" class="msg" role="status"></div>
+    <div class="divider"><span>أو تسجيل الدخول عبر</span></div>
+    <button class="google-btn" type="button" id="googleBtn"><span class="g">G</span> تسجيل الدخول بواسطة Google</button>
+    <div class="new-account">ليس لديك حساب؟ <a href="register.html">إنشاء حساب جديد</a></div>
+    <p class="secure">⌾ دخول آمن ومشفر لحماية بياناتك</p>
+  </section>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
 const sb=supabase.createClient(FC_CONFIG.supabaseUrl,FC_CONFIG.supabaseKey);
-const formEl=document.getElementById('form'), msgEl=document.getElementById('msg');
-function msg(t,c=''){msgEl.textContent=t;msgEl.className='msg show '+c}
-formEl.addEventListener('submit',async e=>{
- e.preventDefault(); msg('جاري تسجيل الدخول...');
- const {data,error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});
- if(error){msg('البريد الإلكتروني أو كلمة المرور غير صحيحة.','error');return}
+const $=id=>document.getElementById(id);
+const logoData='data:image/webp;base64,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'; $('brandLogo').src=logoData;
+function showMsg(t,c=''){ $('msg').textContent=t; $('msg').className='msg show '+c; }
+$('togglePass').onclick=()=>{const p=$('password');p.type=p.type==='password'?'text':'password';};
+$('form').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const email=$('email').value.trim(), password=$('password').value;
+ if(!email||!password){showMsg('اكتب البريد الإلكتروني وكلمة المرور.','error');return;}
+ $('submit').disabled=true; showMsg('جاري تسجيل الدخول...');
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){showMsg('البريد الإلكتروني أو كلمة المرور غير صحيحة.','error');$('submit').disabled=false;return;}
  const u=data.user;
  const {data:p}=await sb.from('students').select('id').eq('auth_user_id',u.id).maybeSingle();
- if(!p){
-   await sb.from('students').upsert({id:u.id,auth_user_id:u.id,full_name:u.user_metadata?.full_name||'',phone:u.user_metadata?.phone||'',email:u.email||''},{onConflict:'id'});
- }
+ if(!p){await sb.from('students').upsert({id:u.id,auth_user_id:u.id,full_name:u.user_metadata?.full_name||'',phone:u.user_metadata?.phone||'',email:u.email||''},{onConflict:'id'});}
  location.href='student.html';
 });
+$('googleBtn').onclick=async()=>{
+ const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+ if(error) showMsg('تعذر بدء تسجيل الدخول بواسطة Google.','error');
+};
 </script>
-
 </body></html>

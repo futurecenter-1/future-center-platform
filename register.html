@@ -1,53 +1,10 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>إنشاء حساب — Future Center</title><link rel="stylesheet" href="auth.css"></head>
-<body><main class="auth-wrap"><section class="card auth-card">
-<div class="auth-head"><div class="brand">FUTURE <span>CENTER</span></div>
-<h1>إنشاء حساب طالب</h1><p>الحساب مجاني. تفعيل المواد يتم لاحقًا من إدارة المنصة.</p></div>
-<form id="form" class="form">
-<div class="field"><label for="name">الاسم بالكامل</label><input class="input" id="name" placeholder="اكتب اسمك بالكامل" required autocomplete="name"></div>
-<div class="field"><label for="phone">رقم الهاتف</label><input class="input" id="phone" placeholder="01xxxxxxxxx" required autocomplete="tel"></div>
-<div class="field"><label for="email">البريد الإلكتروني</label><input class="input" id="email" type="email" placeholder="example@email.com" required autocomplete="email"></div>
-<div class="field"><label for="password">كلمة المرور</label><input class="input" id="password" type="password" minlength="6" placeholder="6 أحرف أو أكثر" required autocomplete="new-password"></div>
-<button class="gold submit" type="submit">حفظ ومتابعة</button></form>
-<div id="msg" class="msg"></div>
-<div class="help-links"><a href="login.html">لدي حساب بالفعل</a><a href="reset.html">نسيت كلمة المرور؟</a></div>
-<a class="back" href="index.html">← العودة إلى المنصة</a>
-<div class="note">لن يتم عرض كلمة المرور للإدارة. استعادة الحساب تتم من خلال البريد الإلكتروني.</div>
-</section></main>
-<script src="config.js"></script>
-<script>
-const formEl=document.getElementById('form'), msgEl=document.getElementById('msg');
-const nameEl=document.getElementById('name'), phoneEl=document.getElementById('phone'), emailEl=document.getElementById('email'), passwordEl=document.getElementById('password');
-function msg(t,c=''){msgEl.textContent=t;msgEl.className='msg show '+c}
-function withTimeout(promise,ms=15000){return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error('انتهت مهلة الاتصال بخادم التسجيل. تأكد من الإنترنت وحاول مرة أخرى.')),ms))])}
-async function registerStudent(){
-  const email=emailEl.value.trim(), password=passwordEl.value, fullName=nameEl.value.trim(), phone=phoneEl.value.trim();
-  if(!window.FC_CONFIG?.supabaseUrl || !window.FC_CONFIG?.supabaseKey) throw new Error('ملف إعدادات المنصة غير محمل (config.js).');
-  const base=FC_CONFIG.supabaseUrl.replace(/\/$/,'');
-  const headers={'Content-Type':'application/json','apikey':FC_CONFIG.supabaseKey};
-  const authRes=await withTimeout(fetch(base+'/auth/v1/signup',{method:'POST',headers,body:JSON.stringify({email,password,data:{full_name:fullName,phone}})}));
-  const authJson=await authRes.json().catch(()=>({}));
-  if(!authRes.ok){
-    const m=authJson?.msg||authJson?.message||authJson?.error_description||'تعذر إنشاء الحساب.';
-    throw new Error(m);
-  }
-  const user=authJson.user;
-  const accessToken=authJson.access_token;
-  if(accessToken && user?.id){
-    const dbRes=await withTimeout(fetch(base+'/rest/v1/students?on_conflict=id',{method:'POST',headers:{...headers,'Authorization':'Bearer '+accessToken,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:user.id,auth_user_id:user.id,full_name:fullName,phone,email})}));
-    if(!dbRes.ok){const t=await dbRes.text(); throw new Error('تم إنشاء الحساب لكن تعذر حفظ بيانات الطالب: '+(t||'خطأ في قاعدة البيانات'));}
-    location.href='student.html'; return;
-  }
-  msg('تم إنشاء الحساب بنجاح. افتح بريدك الإلكتروني واضغط رابط التأكيد، ثم سجّل الدخول.','success');
-  formEl.reset();
-}
-formEl.addEventListener('submit',async e=>{
- e.preventDefault();
- msg('جاري إنشاء الحساب...');
- try{await registerStudent()}catch(err){msg(err?.message||'حدث خطأ غير معروف. حاول مرة أخرى.','error');console.error(err)}
-});
-</script>
-
-</body></html>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>إنشاء حساب — Future Center</title><link rel="stylesheet" href="styles.css"></head><body><main class="auth"><section class="auth-card card"><div class="brand"><div class="brand-mark">FC</div><h1>Future <span class="gold">Center</span></h1><p>إنشاء حساب طالب جديد</p></div><form id="form"><div class="field"><label>الاسم بالكامل</label><input class="input" id="full_name" required></div><div class="field"><label>البريد الإلكتروني</label><input class="input" id="email" type="email" required></div><div class="field"><label>رقم الهاتف</label><input class="input" id="phone"></div><div class="field"><label>كلمة المرور</label><input class="input" id="password" type="password" minlength="6" required></div><div class="field"><label>الدولة</label><select class="select" id="country_id" required><option value="">اختر الدولة</option></select></div><div class="field"><label>الجامعة</label><select class="select" id="university_id" required disabled><option value="">اختر الجامعة</option></select></div><div class="field"><label>المرحلة</label><select class="select" id="stage_id" required disabled><option value="">اختر المرحلة</option></select></div><button class="btn primary btn-wide" id="submit">إنشاء الحساب</button><button type="button" class="link" onclick="location.href='login.html'">لدي حساب بالفعل</button></form><div id="msg" class="empty" style="padding:10px"></div></section></main><script src="config.js"></script><script>
+const C=FC_CONFIG, API=C.supabaseUrl.replace(/\/$/,''); const K=C.supabaseKey;
+const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,opts={}){const r=await fetch(API+'/rest/v1/'+path,{...opts,headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',...(opts.headers||{})}});if(!r.ok)throw Error(await r.text());return r.status===204?null:r.json()}
+async function auth(path,body){const r=await fetch(API+'/auth/v1/'+path,{method:'POST',headers:{apikey:K,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'تعذر إنشاء الحساب');return j}
+async function countries(){try{const x=await api('countries?select=id,name&active=eq.true&order=name.asc');$('country_id').innerHTML='<option value="">اختر الدولة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){$('msg').textContent='تعذر تحميل الدول'}}
+$('country_id').onchange=async()=>{const u=$('university_id'),s=$('stage_id');u.disabled=s.disabled=true;u.innerHTML='<option>جاري التحميل...</option>';s.innerHTML='<option value="">اختر المرحلة</option>';try{const x=await api(`universities?select=id,name&country_id=eq.${encodeURIComponent($('country_id').value)}&active=eq.true&order=name.asc`);u.innerHTML='<option value="">اختر الجامعة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');u.disabled=false}catch(e){u.innerHTML='<option value="">تعذر التحميل</option>'}};
+$('university_id').onchange=async()=>{const s=$('stage_id');s.disabled=true;s.innerHTML='<option>جاري التحميل...</option>';try{const x=await api(`stages?select=id,name&university_id=eq.${encodeURIComponent($('university_id').value)}&active=eq.true&order=name.asc`);s.innerHTML='<option value="">اختر المرحلة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');s.disabled=false}catch(e){s.innerHTML='<option value="">تعذر التحميل</option>'}};
+$('form').onsubmit=async e=>{e.preventDefault();$('submit').disabled=true;$('msg').textContent='جاري إنشاء الحساب...';try{const j=await auth('signup',{email:$('email').value.trim(),password:$('password').value,data:{full_name:$('full_name').value.trim(),phone:$('phone').value.trim()}});if(j.user){await api('students',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({auth_user_id:j.user.id,full_name:$('full_name').value.trim(),phone:$('phone').value.trim(),email:$('email').value.trim(),country_id:$('country_id').value,university_id:$('university_id').value,stage_id:$('stage_id').value})})}location.href='index.html'}catch(e){$('msg').textContent=e.message;$('submit').disabled=false}};countries();
+</script></body></html>
