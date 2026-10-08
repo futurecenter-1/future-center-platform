@@ -86,11 +86,52 @@ async function lecturerLecturePage(id){
   try{
     [l]=await api(`lectures?select=id,title,description,lecture_number,active,is_public,course_id& id=eq.${encodeURIComponent(id)}&limit=1`.replace('& id=','&id='));
     if(!l) return `<section class="card empty">المحاضرة غير موجودة.</section>`;
-    files=await api(`lecture_files?select=*&lecture_id=eq.${encodeURIComponent(id)}&active=eq.true&order=title.asc`);
+    // Confirm this lecture belongs to a course assigned to the signed-in lecturer.
+    const me=await api(`lecturers?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
+    if(!me.length) return `<section class="card empty">حساب المحاضر غير مكتمل.</section>`;
+    const owned=await api(`courses?select=id&lecturer_id=eq.${encodeURIComponent(me[0].id)}&id=eq.${encodeURIComponent(l.course_id)}&limit=1`);
+    if(!owned.length) return `<section class="card empty">لا تملك صلاحية إدارة هذه المحاضرة.</section>`;
+    files=await api(`lecture_files?select=*&lecture_id=eq.${encodeURIComponent(id)}`);
   }catch(e){
     return `<section class="hero card"><h2>تعذر تحميل المحاضرة</h2><p class="muted">${esc(e.message)}</p></section>`;
   }
-  return `<section class="hero card"><button class="link" onclick="go('lecturercourse','${esc(l.course_id)}')">← رجوع للمحاضرات</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">المحاضرة ${esc(l.lecture_number||'')}</p></section><section class="card panel"><h3>محتوى المحاضرة</h3><p class="muted">${esc(l.description||'لا يوجد وصف مضاف.')}</p><div class="video"><span class="muted">لا يوجد رابط فيديو محفوظ في بيانات المحاضرة حاليًا. يمكن إضافته لاحقًا من خلال إدارة المحتوى.</span></div><h3>الملفات</h3><div class="list">${files.length?files.map(f=>{const href=f.file_url||f.url||f.external_url||f.storage_path||'';return href?`<a class="item" href="${esc(href)}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`:`<div class="item"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')} — لا يوجد رابط محفوظ</small></div></div>`}).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
+  const video=files.find(f=>/video|youtube|فيديو/i.test(String(f.file_type||'')) && (f.file_url||f.url||f.external_url));
+  const resources=files.filter(f=>f!==video);
+  return `<section class="hero card"><button class="link" onclick="go('lecturercourse','${esc(l.course_id)}')">← رجوع للمحاضرات</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">المحاضرة ${esc(l.lecture_number||'')}</p></section>
+  <section class="card panel"><h3>محتوى المحاضرة</h3><p class="muted">${esc(l.description||'لا يوجد وصف مضاف.')}</p>
+  <div class="grid2" style="margin:16px 0"><button class="btn primary" onclick="openLectureResourceForm('${esc(l.id)}','video')">＋ إضافة فيديو</button><button class="btn secondary" onclick="openLectureResourceForm('${esc(l.id)}','file')">＋ إضافة رابط ملف</button></div>
+  <div class="video">${video?renderVideoResource(video):'<span class="muted">لا يوجد فيديو مضاف لهذه المحاضرة حتى الآن.</span>'}</div>
+  <h3>الملفات والمرفقات</h3><div class="list">${resources.length?resources.map(f=>{const href=f.file_url||f.url||f.external_url||f.storage_path||'';return href?`<a class="item" href="${esc(href)}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`:`<div class="item"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></div>`}).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
+}
+function renderVideoResource(f){
+  const raw=String(f.file_url||f.url||f.external_url||'');
+  const m=raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  if(m) return `<div style="position:relative;padding-top:56.25%;overflow:hidden;border-radius:16px"><iframe src="https://www.youtube-nocookie.com/embed/${m[1]}" title="${esc(f.title||'فيديو المحاضرة')}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
+  if(/\.(mp4|webm|ogg)(\?|$)/i.test(raw)) return `<video controls playsinline style="width:100%;border-radius:16px" src="${esc(raw)}"></video>`;
+  return `<a class="btn secondary" href="${esc(raw)}" target="_blank" rel="noopener">▶ فتح الفيديو</a>`;
+}
+function openLectureResourceForm(lectureId,kind){
+  document.querySelector('#resourceModal')?.remove();
+  const isVideo=kind==='video';
+  const html=`<div class="modal" id="resourceModal"><div class="card"><div class="row"><h2>${isVideo?'إضافة فيديو للمحاضرة':'إضافة ملف للمحاضرة'}</h2><button type="button" class="btn secondary" onclick="document.querySelector('#resourceModal')?.remove()">×</button></div><p class="muted">${isVideo?'الصق رابط YouTube أو رابط فيديو مباشر.':'الصق رابط PDF أو الملف المرفوع على خدمة تخزين.'} </p><form onsubmit="saveLectureResource(event,'${esc(lectureId)}','${kind}')"><div class="field"><label>اسم ${isVideo?'الفيديو':'الملف'}</label><input class="input" name="title" required placeholder="${isVideo?'مثال: المحاضرة الأولى':'مثال: ملخص المحاضرة'}"></div><div class="field"><label>الرابط</label><input class="input" name="file_url" type="url" required placeholder="https://..."></div><button class="btn primary btn-wide">حفظ</button></form></div></div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+async function saveLectureResource(e,lectureId,kind){
+  e.preventDefault();
+  const fd=new FormData(e.target);const title=String(fd.get('title')||'').trim();const url=String(fd.get('file_url')||'').trim();
+  if(!/^https:\/\//i.test(url)){toast('استخدم رابط HTTPS صحيح','err');return}
+  try{
+    // Re-check ownership before writing, and store video links in lecture_files (lectures has no video_url column).
+    const [l]=await api(`lectures?select=id,course_id& id=eq.${encodeURIComponent(lectureId)}&limit=1`.replace('& id=','&id='));
+    if(!l) throw Error('المحاضرة غير موجودة');
+    const me=await api(`lecturers?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
+    if(!me.length) throw Error('حساب المحاضر غير مكتمل');
+    const owned=await api(`courses?select=id&lecturer_id=eq.${encodeURIComponent(me[0].id)}&id=eq.${encodeURIComponent(l.course_id)}&limit=1`);
+    if(!owned.length) throw Error('لا تملك صلاحية تعديل هذه المحاضرة');
+    const record={lecture_id:l.id,title,file_url:url,file_type:kind==='video'?'video':'pdf',active:true};
+    await api('lecture_files',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(record)});
+    document.querySelector('#resourceModal')?.remove();toast(kind==='video'?'تم حفظ رابط الفيديو':'تم حفظ رابط الملف','ok');await render();
+  }catch(err){toast('تعذر الحفظ: '+err.message,'err')}
 }
 
 async function countLecturesForCourses(courses){
@@ -105,7 +146,7 @@ async function countLecturesForCourses(courses){
 async function count(table){try{const r=await api(`${table}?select=id&limit=1`,{headers:{Prefer:'count=exact'}});return Array.isArray(r)?r.length:'—'}catch{return '—'}}
 async function coursesPage(mine){let rows=[];try{if(mine){const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);if(me.length){const subs=await api(`student_courses?select=course_id,active,expires_at&student_id=eq.${me[0].id}`);const ids=subs.filter(s=>s.active!==false).map(s=>s.course_id);if(ids.length)rows=await api(`courses?select=id,name,code,is_public,active,stage_id&id=in.(${ids.join(',')})&order=name.asc`)} }else rows=await api('courses?select=id,name,code,is_public,active,stage_id&active=eq.true&order=name.asc')}catch(e){toast('تعذر تحميل الكورسات','err')}return `<section class="hero card"><div class="row"><div><h2>${mine?'كورساتي':'كل الكورسات'}</h2><p class="muted">${mine?'المحتوى المشترك فيه فقط.':'تصفح المواد المتاحة على المنصة.'}</p></div></div></section><section class="grid">${rows.length?rows.map(c=>`<article class="course card"><div class="cover">📚</div><div class="body"><span class="tag">${c.is_public?'متاح':'مشتركين فقط'}</span><h3>${esc(c.name)}</h3><p class="muted">إدارة محتوى الكورس ومحاضراته.</p><button class="btn primary" onclick="go('course','${c.id}')">فتح الكورس</button></div></article>`).join(''):`<div class="card empty" style="grid-column:1/-1">لا توجد كورسات لعرضها حالياً.</div>`}</section>`}
 async function coursePage(id){let c,l=[];try{[c]=await api(`courses?select=*&id=eq.${id}&limit=1`);l=await api(`lectures?select=id,title,description,lecture_number,active,is_public&course_id=eq.${id}&active=eq.true&order=lecture_number.asc`)}catch(e){}return `<section class="hero card"><button class="link" onclick="go('courses')">← رجوع</button><h2>${esc(c?.name||'الكورس')}</h2><p class="muted">${esc(c?.code ? 'كود الكورس: '+c.code : 'عرض محاضرات الكورس والمحتوى التعليمي.')}</p></section><section class="card panel"><h3>المحاضرات</h3><div class="list">${l.length?l.map(x=>`<button class="item lecture ${x.is_public?'':'locked'}" onclick="go('lecture','${x.id}')"><div class="icon">${x.is_public?'▶':'🔒'}</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div></button>`).join(''):'<div class="empty">لا توجد محاضرات.</div>'}</div></section>`}
-async function lecturePage(id){let l,files=[];try{[l]=await api(`lectures?select=*&id=eq.${id}&limit=1`);files=await api(`lecture_files?select=*&lecture_id=eq.${id}&active=eq.true&order=title.asc`)}catch{}const u=l?.video_url||l?.video_source_url||'';return `<section class="hero card"><button class="link" onclick="go('course', '${l?.course_id||''}')">← رجوع للكورس</button><h2>${esc(l?.title||'المحاضرة')}</h2><p class="muted">${esc(l?.description||'')}</p></section><section class="card panel"><div class="video">${u?`<video controls src="${esc(u)}"></video>`:'<span class="muted">سيظهر الفيديو هنا بعد إضافة رابط الفيديو.</span>'}</div><h3>الملفات</h3><div class="list">${files.length?files.map(f=>`<a class="item" href="${esc(f.file_url)}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title)}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`).join(''):'<div class="empty">لا توجد ملفات.</div>'}</div></section>`}
+async function lecturePage(id){let l,files=[];try{[l]=await api(`lectures?select=id,title,description,course_id& id=eq.${encodeURIComponent(id)}&limit=1`.replace('& id=','&id='));files=await api(`lecture_files?select=*&lecture_id=eq.${encodeURIComponent(id)}`)}catch{}const video=files.find(f=>/video|youtube|فيديو/i.test(String(f.file_type||''))&&(f.file_url||f.url||f.external_url));const resources=files.filter(f=>f!==video);return `<section class="hero card"><button class="link" onclick="go('course','${l?.course_id||''}')">← رجوع للكورس</button><h2>${esc(l?.title||'المحاضرة')}</h2><p class="muted">${esc(l?.description||'')}</p></section><section class="card panel"><div class="video">${video?renderVideoResource(video):'<span class="muted">سيظهر الفيديو هنا بعد إضافته من المحاضر.</span>'}</div><h3>الملفات</h3><div class="list">${resources.length?resources.map(f=>`<a class="item" href="${esc(f.file_url||f.url||f.external_url||'#')}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`).join(''):'<div class="empty">لا توجد ملفات.</div>'}</div></section>`}
 async function lecturersPage(){
   let rows=[];
   try{rows=await api('lecturers?select=id,full_name,bio,image_url&active=eq.true&order=full_name.asc')}catch{}
