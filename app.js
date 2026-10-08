@@ -19,17 +19,26 @@ async function chooseRole(){
   state.view='home';
   try{
     const roles=await api(`user_roles?select=role&user_id=eq.${encodeURIComponent(session.user.id)}&order=role.asc`);
-    const names=(roles||[]).map(x=>x.role);
+    const names=(roles||[]).map(x=>String(x.role||'').toLowerCase());
     if(names.includes('admin')) state.role='admin';
     else if(names.includes('lecturer')) state.role='lecturer';
-    else state.role='student';
+    else {
+      try{
+        const lp=await api(`lecturers?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
+        state.role=lp?.length?'lecturer':'student';
+      }catch{state.role='student'}
+    }
   }catch(e){
     try{
-      const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
-      state.role=me?.length?'student':'student';
+      const lp=await api(`lecturers?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
+      if(lp?.length) state.role='lecturer';
+      else {
+        const st=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
+        state.role=st?.length?'student':'student';
+      }
     }catch{state.role='student'}
   }
-  render();
+  try{ await render(); }catch(e){ state.role='student'; try{await render()}catch{} }
 }
 function navFor(role){
   if(role==='student') return `<button class="${state.view==='home'?'active':''}" onclick="go('home')">الرئيسية</button><button class="${state.view==='courses'?'active':''}" onclick="go('courses')">كورساتي</button><button class="${state.view==='catalog'?'active':''}" onclick="go('catalog')">كل الكورسات</button><button class="${state.view==='lecturers'?'active':''}" onclick="go('lecturers')">الدكاترة</button><button class="${state.view==='profile'?'active':''}" onclick="go('profile')">حسابي</button>`;
@@ -45,7 +54,7 @@ async function render(){
   }
   let html='';
   if(state.role==='student') html=await studentPage();
-  else if(state.role==='lecturer') html=await lecturerPage();
+  else if(state.role==='lecturer') { html=await lecturerPage(); if(state.view==='lecturerlecture') html=await lecturerLecturePage(state.data.id); }
   else if(state.role==='admin') html=await adminPage();
   else html=await studentPage();
   document.querySelector('#app').innerHTML=layout(html,navFor(state.role));
@@ -54,7 +63,7 @@ async function studentPage(){if(state.view==='home')return `<section class="hero
 async function lecturerPage(){
   let courses=[];
   try{
-    const me=await api(`lecturers?select=id,full_name,email,image_url&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
+    const me=await api(`lecturers?select=id,full_name,email,active&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
     const lecturer=me?.[0];
     if(!lecturer) return `<section class="hero card"><h2>حساب المحاضر غير مكتمل</h2><p class="muted">لم يتم ربط حسابك بملف محاضر بعد.</p></section>`;
     courses=await api(`courses?select=id,name,code,is_public,active,stage_id&lecturer_id=eq.${lecturer.id}&order=name.asc`);
@@ -64,14 +73,27 @@ async function lecturerPage(){
     if(state.view==='lecturercourse'){
       const c=courses.find(x=>String(x.id)===String(state.data.id));
       if(!c) return `<section class="card empty">هذا الكورس غير متاح لحسابك.</section>`;
-      const lectures=await api(`lectures?select=id,title,description,lecture_number,active,is_public,course_id&course_id=eq.${c.id}&order=lecture_number.asc`);
-      return `<section class="hero card"><button class="link" onclick="go('mycourses')">← رجوع</button><h2>${esc(c.name)}</h2><p class="muted">إدارة محاضرات الكورس.</p></section><section class="card panel"><h3>المحاضرات</h3><div class="list">${lectures.length?lectures.map(x=>`<div class="item"><div class="icon">🎥</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div><span class="tag">${x.active?'نشطة':'موقوفة'}</span></div>`).join(''):'<div class="empty">لا توجد محاضرات.</div>'}</div></section>`;
+      const lectures=await api(`lectures?select=id,title,description,lecture_number,active,is_public,course_id,video_url,video_source_url&course_id=eq.${c.id}&order=lecture_number.asc`);
+      return `<section class="hero card"><button class="link" onclick="go('mycourses')">← رجوع</button><h2>${esc(c.name)}</h2><p class="muted">إدارة محاضرات الكورس.</p></section><section class="card panel"><h3>المحاضرات</h3><div class="list">${lectures.length?lectures.map(x=>`<button class="item lecture" onclick="go('lecturerlecture','${x.id}')"><div class="icon">🎥</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div><span class="tag">${x.active?'نشطة':'موقوفة'}</span></button>`).join(''):'<div class="empty">لا توجد محاضرات.</div>'}</div></section>`;
     }
     return `<section class="hero card"><h2>أهلاً بك في لوحة المحاضر</h2><p class="muted">إدارة كورساتك ومحاضراتك من مكان واحد.</p><div class="grid2"><div class="stat card"><small>كورساتي</small><div class="num">${courses.length}</div></div><div class="stat card"><small>المحاضرات</small><div class="num">${await countLecturesForCourses(courses)}</div></div></div><button class="btn primary" onclick="go('mycourses')">عرض كورساتي</button></section>`;
   }catch(e){
     return `<section class="hero card"><h2>تعذر تحميل لوحة المحاضر</h2><p class="muted">${esc(e.message)}</p></section>`;
   }
 }
+async function lecturerLecturePage(id){
+  let l,files=[];
+  try{
+    [l]=await api(`lectures?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
+    if(!l) return `<section class="card empty">المحاضرة غير موجودة.</section>`;
+    files=await api(`lecture_files?select=*&lecture_id=eq.${encodeURIComponent(id)}&active=eq.true&order=title.asc`);
+  }catch(e){
+    return `<section class="hero card"><h2>تعذر تحميل المحاضرة</h2><p class="muted">${esc(e.message)}</p></section>`;
+  }
+  const u=l.video_url||l.video_source_url||'';
+  return `<section class="hero card"><button class="link" onclick="go('lecturercourse','${esc(l.course_id)}')">← رجوع للمحاضرات</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">المحاضرة ${esc(l.lecture_number||'')}</p></section><section class="card panel"><h3>محتوى المحاضرة</h3><p class="muted">${esc(l.description||'لا يوجد وصف مضاف.')}</p><div class="video">${u?`<video controls src="${esc(u)}"></video>`:'<span class="muted">لا يوجد فيديو مضاف للمحاضرة حتى الآن.</span>'}</div><h3>الملفات</h3><div class="list">${files.length?files.map(f=>`<a class="item" href="${esc(f.file_url||'')}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
+}
+
 async function countLecturesForCourses(courses){
   if(!courses.length)return 0;
   try{
@@ -100,4 +122,4 @@ function closeModal(){document.querySelector('#modal')?.remove()}
 async function saveRecord(e,table,id){e.preventDefault();const o={};new FormData(e.target).forEach((v,k)=>{if(v!=='')o[k]=['active','is_public'].includes(k)?v==='true':v});try{await api(table+(id?`?id=eq.${id}`:''),{method:id?'PATCH':'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(o)});closeModal();toast('تم الحفظ بنجاح','ok');render()}catch(x){toast(x.message,'err')}}
 async function del(table,id){if(!confirm('متأكد من الحذف؟'))return;try{await api(`${table}?id=eq.${id}`,{method:'DELETE'});toast('تم الحذف','ok');render()}catch(x){toast(x.message,'err')}}
 async function logout(){clearSession();state={role:null,view:'login',data:{}};render()}
-(async()=>{try{const s=JSON.parse(localStorage.getItem('fc_session')||'null');if(s?.access_token){session=s;await chooseRole()}else render()}catch{clearSession();render()}})();
+(async()=>{try{const s=JSON.parse(localStorage.getItem('fc_session')||'null');if(s?.access_token){session=s;await chooseRole()}else render()}catch(e){if(session?.access_token){state.role='student';try{await render()}catch{}}else{clearSession();render()}}})();
