@@ -54,7 +54,7 @@ async function render(){
   }
   let html='';
   if(state.role==='student') html=await studentPage();
-  else if(state.role==='lecturer') { html=await lecturerPage(); if(state.view==='lecturerlecture') html=await lecturerLecturePage(state.data.id); }
+  else if(state.role==='lecturer') { html=await lecturerPage(); if(state.view==='lecturerlecture' || state.view==='lecture') html=await lecturerLecturePage(state.data.id); }
   else if(state.role==='admin') html=await adminPage();
   else html=await studentPage();
   document.querySelector('#app').innerHTML=layout(html,navFor(state.role));
@@ -74,7 +74,7 @@ async function lecturerPage(){
       const c=courses.find(x=>String(x.id)===String(state.data.id));
       if(!c) return `<section class="card empty">هذا الكورس غير متاح لحسابك.</section>`;
       const lectures=await api(`lectures?select=id,title,description,lecture_number,active,is_public,course_id&course_id=eq.${c.id}&order=lecture_number.asc`);
-      return `<section class="hero card"><button class="link" onclick="go('mycourses')">← رجوع</button><h2>${esc(c.name)}</h2><p class="muted">إدارة محاضرات الكورس.</p></section><section class="card panel"><h3>المحاضرات</h3><div class="list">${lectures.length?lectures.map(x=>`<button class="item lecture" onclick="go('lecturerlecture','${x.id}')"><div class="icon">🎥</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div><span class="tag">${x.active?'نشطة':'موقوفة'}</span></button>`).join(''):'<div class="empty">لا توجد محاضرات.</div>'}</div></section>`;
+      return `<section class="hero card"><button class="link" onclick="go('mycourses')">← رجوع</button><h2>${esc(c.name)}</h2><p class="muted">إدارة محاضرات الكورس.</p></section><section class="card panel"><h3>المحاضرات</h3><div class="list">${lectures.length?lectures.map(x=>`<button class="item lecture" onclick="go('lecturerlecture','${x.id}')" type="button"><div class="icon">🎥</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div><span class="tag">${x.active?'نشطة':'موقوفة'}</span></button>`).join(''):'<div class="empty">لا توجد محاضرات.</div>'}</div></section>`;
     }
     return `<section class="hero card"><h2>أهلاً بك في لوحة المحاضر</h2><p class="muted">إدارة كورساتك ومحاضراتك من مكان واحد.</p><div class="grid2"><div class="stat card"><small>كورساتي</small><div class="num">${courses.length}</div></div><div class="stat card"><small>المحاضرات</small><div class="num">${await countLecturesForCourses(courses)}</div></div></div><button class="btn primary" onclick="go('mycourses')">عرض كورساتي</button></section>`;
   }catch(e){
