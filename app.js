@@ -84,14 +84,13 @@ async function lecturerPage(){
 async function lecturerLecturePage(id){
   let l,files=[];
   try{
-    [l]=await api(`lectures?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
+    [l]=await api(`lectures?select=id,title,description,lecture_number,active,is_public,course_id& id=eq.${encodeURIComponent(id)}&limit=1`.replace('& id=','&id='));
     if(!l) return `<section class="card empty">المحاضرة غير موجودة.</section>`;
     files=await api(`lecture_files?select=*&lecture_id=eq.${encodeURIComponent(id)}&active=eq.true&order=title.asc`);
   }catch(e){
     return `<section class="hero card"><h2>تعذر تحميل المحاضرة</h2><p class="muted">${esc(e.message)}</p></section>`;
   }
-  const u=l.video_url||l.video_source_url||'';
-  return `<section class="hero card"><button class="link" onclick="go('lecturercourse','${esc(l.course_id)}')">← رجوع للمحاضرات</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">المحاضرة ${esc(l.lecture_number||'')}</p></section><section class="card panel"><h3>محتوى المحاضرة</h3><p class="muted">${esc(l.description||'لا يوجد وصف مضاف.')}</p><div class="video">${u?`<video controls src="${esc(u)}"></video>`:'<span class="muted">لا يوجد فيديو مضاف للمحاضرة حتى الآن.</span>'}</div><h3>الملفات</h3><div class="list">${files.length?files.map(f=>`<a class="item" href="${esc(f.file_url||'')}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
+  return `<section class="hero card"><button class="link" onclick="go('lecturercourse','${esc(l.course_id)}')">← رجوع للمحاضرات</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">المحاضرة ${esc(l.lecture_number||'')}</p></section><section class="card panel"><h3>محتوى المحاضرة</h3><p class="muted">${esc(l.description||'لا يوجد وصف مضاف.')}</p><div class="video"><span class="muted">لا يوجد رابط فيديو محفوظ في بيانات المحاضرة حاليًا. يمكن إضافته لاحقًا من خلال إدارة المحتوى.</span></div><h3>الملفات</h3><div class="list">${files.length?files.map(f=>{const href=f.file_url||f.url||f.external_url||f.storage_path||'';return href?`<a class="item" href="${esc(href)}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`:`<div class="item"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')} — لا يوجد رابط محفوظ</small></div></div>`}).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
 }
 
 async function countLecturesForCourses(courses){
