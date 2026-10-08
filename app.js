@@ -15,20 +15,37 @@ async function loadStages(id){const el=document.querySelector('#stage_id');el.in
 async function doLogin(e){e.preventDefault();try{const j=await auth('token?grant_type=password',{email:email.value,password:password.value});saveSession(j);await chooseRole();}catch(x){toast(x.message,'err')}}
 async function doRegister(e){e.preventDefault();try{const body={email:email.value,password:password.value,data:{full_name:full_name.value,phone:phone.value}};const j=await auth('signup',body);saveSession(j);if(j.user){await api('students',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({auth_user_id:j.user.id,full_name:full_name.value,phone:phone.value,email:email.value,country_id:country_id.value,university_id:university_id.value,stage_id:stage_id.value})})}toast('تم إنشاء الحساب بنجاح','ok');state.role='student';state.view='home';render()}catch(x){toast(x.message,'err')}}
 async function chooseRole(){
-  state.role='student';
+  state.role=null;
   state.view='home';
   try{
+    // 1) Primary source: explicit role assigned to the authenticated user.
     const roles=await api(`user_roles?select=role&user_id=eq.${encodeURIComponent(session.user.id)}&order=role.asc`);
-    const names=(roles||[]).map(x=>x.role);
+    const names=(roles||[]).map(x=>String(x.role||'').toLowerCase());
     if(names.includes('admin')) state.role='admin';
     else if(names.includes('lecturer')) state.role='lecturer';
-    else state.role='student';
   }catch(e){
+    // Continue to profile-based detection below. Do not silently turn an
+    // unknown account into a student.
+  }
+
+  // 2) Safe fallback: the lecturer profile is linked directly to auth.users.
+  if(!state.role){
+    try{
+      const me=await api(`lecturers?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
+      if(me?.length) state.role='lecturer';
+    }catch(e){}
+  }
+
+  // 3) Student is only selected when an actual student profile exists.
+  if(!state.role){
     try{
       const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
-      state.role=me?.length?'student':'student';
-    }catch{state.role='student'}
+      if(me?.length) state.role='student';
+    }catch(e){}
   }
+
+  // Never downgrade an authenticated non-student/unknown account silently.
+  if(!state.role) state.role='unknown';
   render();
 }
 function navFor(role){
@@ -47,7 +64,7 @@ async function render(){
   if(state.role==='student') html=await studentPage();
   else if(state.role==='lecturer') html=await lecturerPage();
   else if(state.role==='admin') html=await adminPage();
-  else html=await studentPage();
+  else html=`<section class="hero card"><h2>تعذر تحديد صلاحية الحساب</h2><p class="muted">لم يتم العثور على دور مرتبط بهذا الحساب.</p><button class="btn secondary" onclick="logout()">خروج</button></section>`;
   document.querySelector('#app').innerHTML=layout(html,navFor(state.role));
 }
 async function studentPage(){if(state.view==='home')return `<section class="hero card"><h2>أهلاً بيك في <span class="gold">Future Center</span></h2><p class="muted">كل كورساتك ومحاضراتك في مكان واحد.</p><div class="grid2"><div class="stat card"><small>كورساتي</small><div class="num">${await count('student_courses')}</div></div><div class="stat card"><small>المحاضرات المتاحة</small><div class="num">${await count('lectures')}</div></div></div></section>`;if(state.view==='courses')return coursesPage(true);if(state.view==='catalog')return coursesPage(false);if(state.view==='lecturers')return lecturersPage();if(state.view==='profile')return profilePage();if(state.view==='course')return coursePage(state.data.id);if(state.view==='lecture')return lecturePage(state.data.id);return ''}
