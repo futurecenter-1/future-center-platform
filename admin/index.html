@@ -315,6 +315,7 @@ async function saveSiteSettings(){
     await saveOneSetting("brand",{name:document.getElementById("set_brand_name").value.trim(),subtitle:document.getElementById("set_brand_subtitle").value.trim(),logo_url:document.getElementById("set_logo_url").value.trim()});
     await saveOneSetting("home",{title:document.getElementById("set_home_title").value.trim(),subtitle:document.getElementById("set_home_subtitle").value.trim(),image_url:document.getElementById("set_home_image_url").value.trim()});
     await saveOneSetting("theme",{primary:document.getElementById("set_primary").value,background:document.getElementById("set_background").value});
+    await applyAdminBranding();
     showSettingsNotice("تم حفظ التصميم بنجاح.","ok");
   }catch(e){showSettingsNotice("فشل حفظ التعديلات: "+e.message,"err")}
 }
