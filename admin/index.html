@@ -275,6 +275,7 @@ async function render(section){
   }[section];
   if(!cfg){c.innerHTML="";return}
   c.innerHTML=`<div class="card panel"><div class="sectionhead"><h2>${cfg.title}</h2>${cfg.table==="students"?"<span class=\"notice\">الحسابات تُنشأ من صفحة التسجيل</span>":`<button class="primary" onclick="addRecord('${cfg.table}')">＋ إضافة</button>`}</div><div id="notice"></div><div id="list">جاري التحميل...</div></div>`;
+  if(section==="lecturers"){const h=document.querySelector("#appContent .sectionhead");if(h)h.insertAdjacentHTML("beforeend",'<button class="primary" onclick="addLecturerAccount()">＋ إنشاء حساب مدرس</button>')}
   await loadTable(cfg);
 }
 
@@ -461,6 +462,25 @@ async function formHTML(table,record={}){
   return html;
 }
 
+async function addLecturerAccount(){
+  const body = '<div class="notice">سيتم إنشاء حساب دخول فعلي وربطه بملف المدرس وصلاحية المدرس. احتفظ بكلمة المرور وشاركها مع المدرس بطريقة آمنة.</div><div class="formgrid"><label>اسم المدرس<input class="input" id="newLecturerName" required></label><label>البريد الإلكتروني<input class="input" type="email" id="newLecturerEmail" required></label><label>رقم الهاتف<input class="input" id="newLecturerPhone"></label><label>كلمة مرور مؤقتة (10 أحرف على الأقل)<input class="input" type="password" id="newLecturerPassword" minlength="10" autocomplete="new-password" required></label></div><div style="display:flex;gap:8px;margin-top:15px"><button class="primary" id="createLecturerBtn" onclick="submitLecturerAccount()">إنشاء الحساب</button><button class="secondary" onclick="closeModal()">إلغاء</button></div>';
+  openModal("إنشاء حساب مدرس",body);
+}
+async function submitLecturerAccount(){
+  const full_name=document.getElementById("newLecturerName")?.value.trim();
+  const email=document.getElementById("newLecturerEmail")?.value.trim();
+  const phone=document.getElementById("newLecturerPhone")?.value.trim();
+  const password=document.getElementById("newLecturerPassword")?.value;
+  if(!full_name||!email||!password){showNotice("أكمل الاسم والبريد وكلمة المرور.");return}
+  if(password.length<10){showNotice("كلمة المرور لازم تكون 10 أحرف على الأقل.");return}
+  const btn=document.getElementById("createLecturerBtn");if(btn){btn.disabled=true;btn.textContent="جاري إنشاء الحساب..."}
+  try{
+    const response=await fetch(SUPABASE_URL+"/functions/v1/admin-create-lecturer",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token,"Content-Type":"application/json"},body:JSON.stringify({full_name,email,phone,password})});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||data.message||"تعذر إنشاء الحساب");
+    closeModal();await render("lecturers");await loadCounts();showNotice("تم إنشاء حساب المدرس وربطه بالصلاحيات بنجاح.");
+  }catch(e){showNotice("فشل إنشاء الحساب: "+e.message);if(btn){btn.disabled=false;btn.textContent="إنشاء الحساب"}}
+}
 async function addRecord(table){
   try{
     const body=await formValues(table,{});
