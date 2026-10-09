@@ -390,6 +390,46 @@ async function optionsFor(key){
   return data.map(x=>`<option value="${esc(x[c.value])}">${esc(x[c.text]||x[c.value])}</option>`).join("");
 }
 
+async function filterStudentOptions(changed){
+  const country=document.getElementById("f_country_id");
+  const university=document.getElementById("f_university_id");
+  const stage=document.getElementById("f_stage_id");
+  if(!country||!university||!stage)return;
+  const keepUniversity=university.value, keepStage=stage.value;
+  if(changed==="country") { university.value=""; stage.value=""; }
+  if(changed==="university") { stage.value=""; }
+  const countryId=country.value;
+  const universityQuery=countryId? "?select=id,name&country_id=eq."+encodeURIComponent(countryId)+"&order=name.asc":"?select=id,name&order=name.asc";
+  const universities=await api("universities",{query:universityQuery});
+  university.innerHTML='<option value="">اختر الجامعة...</option>'+universities.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name||x.id)+'</option>').join("");
+  if(changed==="init"&&keepUniversity) university.value=keepUniversity;
+  const universityId=university.value;
+  const stageQuery=universityId? "?select=id,name&university_id=eq."+encodeURIComponent(universityId)+"&order=name.asc":"?select=id,name&order=name.asc";
+  const stages=await api("stages",{query:stageQuery});
+  stage.innerHTML='<option value="">اختر المرحلة...</option>'+stages.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name||x.id)+'</option>').join("");
+  if(changed==="init"&&keepStage) stage.value=keepStage;
+}
+async function uploadLectureAsset(input){
+  const file=input.files?.[0]; if(!file) return;
+  const lectureId=document.getElementById("f_lecture_id")?.value;
+  if(!lectureId){showNotice("اختار المحاضرة أولًا ثم ارفع الملف.");input.value="";return}
+  if(file.size>100*1024*1024){showNotice("حجم الملف أكبر من 100 ميجابايت.");input.value="";return}
+  if(!adminSession?.access_token){showNotice("انتهت جلسة الإدارة. سجّل الدخول مرة أخرى.");input.value="";return}
+  try{
+    showNotice("جاري رفع الملف إلى التخزين الخاص...");
+    const safe=file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(-90)||"lecture-file";
+    const path=lectureId+"/"+Date.now()+"-"+safe;
+    const response=await fetch(SUPABASE_URL+"/storage/v1/object/lecture-assets/"+path.split("/").map(encodeURIComponent).join("/"),{
+      method:"POST",
+      headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},
+      body:file
+    });
+    if(!response.ok) throw new Error(await response.text());
+    const field=document.getElementById("f_file_url");
+    if(field) field.value=path;
+    showNotice("تم رفع الملف بأمان. اضغط «حفظ» لحفظ بياناته وربطه بالمحاضرة.");
+  }catch(e){showNotice("فشل رفع الملف: "+e.message)}
+}
 async function formHTML(table,record={}){
   const defs={
     countries:["name","code","active"],
@@ -410,8 +450,9 @@ async function formHTML(table,record={}){
     const req=["name","title","file_type","lecture_id","course_id","stage_id","university_id","student_id","student_id"].includes(k);
     html+=`<label class="${k==="description"||k==="notes"?"full":""}">${label(k)}`;
     if(k==="active"||k==="is_public") html+=`<select class="select" id="f_${k}"><option value="true" ${v!==false?"selected":""}>نعم</option><option value="false" ${v===false?"selected":""}>لا</option></select>`;
+    else if(k==="file_url" && table==="lecture_files") html+=`<input class="input" id="f_file_url" value="${esc(v)}" placeholder="مسار الملف الخاص بعد الرفع"><input class="input" type="file" id="lectureAssetInput" onchange="uploadLectureAsset(this)" style="margin-top:7px"><small>ارفع الملف بعد اختيار المحاضرة. الحد الأقصى 100 ميجابايت. لا تستخدم رابطًا عامًا للمحتوى الخاص.</small>`;
     else if(k==="image_url") html+=`<input class="input" id="f_image_url" value="${esc(v)}" placeholder="رابط الصورة أو ارفع صورة أدناه"><input class="input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="uploadSiteAsset(this,'f_image_url')" style="margin-top:7px"><img id="f_image_url_preview" src="${esc(v)}" alt="" style="display:${v?"block":"none"};max-width:160px;max-height:90px;object-fit:contain;margin-top:7px;border-radius:10px">`;
-    else if(optionTables[k]) html+=`<select class="select" id="f_${k}"><option value="">اختر...</option>${await optionsFor(k)}</select>`;
+    else if(optionTables[k]) html+=`<select class="select" id="f_${k}" ${table==="students"&&k==="country_id"?'onchange="filterStudentOptions(\'country\')"':""} ${table==="students"&&k==="university_id"?'onchange="filterStudentOptions(\'university\')"':""}><option value="">اختر...</option>${await optionsFor(k)}</select>`;
     else if(k==="description"||k==="notes"||k==="subjects") html+=`<textarea class="textarea" id="f_${k}" ${req?"required":""}>${esc(v)}</textarea>`;
     else html+=`<input class="input" id="f_${k}" value="${esc(v)}" ${k==="lecture_number"?"type=\"number\"":""} ${k==="expires_at"?"type=\"datetime-local\"":""} ${req?"required":""}>`;
     html+="</label>";
@@ -425,6 +466,7 @@ async function addRecord(table){
     const body=await formValues(table,{});
     openModal("إضافة جديد",await formHTML(table,{}));
     for(const k of Object.keys(body)){const el=document.getElementById("f_"+k);if(el&&optionTables[k])el.value=body[k]||""}
+    if(table==="students") await filterStudentOptions("init");
     document.getElementById("saveBtn").onclick=()=>saveRecord(table,null);
   }catch(e){showNotice(e.message)}
 }
@@ -432,6 +474,7 @@ async function editRecord(table,record){
   openModal("تعديل البيانات",await formHTML(table,record));
   const defs=Object.keys(record);
   for(const k of defs){const el=document.getElementById("f_"+k);if(el&&optionTables[k])el.value=record[k]??""}
+  if(table==="students") await filterStudentOptions("init");
   document.getElementById("saveBtn").onclick=()=>saveRecord(table,record.id);
 }
 async function formValues(table,record){
