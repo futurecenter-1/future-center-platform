@@ -267,7 +267,7 @@ async function render(section){
     courses:{title:"📚 الكورسات والمواد",table:"courses",cols:["name","code","active","is_public","stage_id","lecturer_id","image_url"],fields:["name","code","active","is_public","stage_id","lecturer_id","image_url"]},
     lectures:{title:"🎥 المحاضرات",table:"lectures",cols:["title","lecture_number","active","is_public","course_id","lecturer_id"],fields:["title","description","lecture_number","active","is_public","course_id","lecturer_id"]},
     files:{title:"📄 الملفات",table:"lecture_files",cols:["title","file_type","file_url","active","lecture_id"],fields:["title","file_type","file_url","provider_id","active","lecture_id"]},
-    students:{title:"👨‍🎓 الطلاب",table:"students",cols:["full_name","phone","email","auth_user_id"],fields:["full_name","phone","email","auth_user_id"]},
+    students:{title:"👨‍🎓 الطلاب",table:"students",cols:["full_name","phone","email","country_id","university_id","stage_id","auth_user_id"],fields:["full_name","phone","email","country_id","university_id","stage_id","auth_user_id"]},
     subscriptions:{title:"💳 الاشتراكات",table:"student_courses",cols:["student_name","course_name","active","expires_at"],fields:["student_id","course_id","active","expires_at"]},
     registrations:{title:"📝 التسجيلات",table:"registrations",cols:["student_name","primary_phone","university","level","study_type","group_name"],fields:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"]},
     subjects:{title:"🗂️ الموضوعات",table:"subjects",cols:["name","description","image_url"],fields:["name","description","image_url"]},
@@ -362,7 +362,7 @@ async function loadTable(cfg){
     </tbody></table></div>`;
   }catch(e){box.innerHTML=`<div class="notice err">تعذر تحميل البيانات: ${esc(e.message)}</div>`}
 }
-function label(k){return ({name:"الاسم",code:"الكود",active:"نشط",is_public:"عام",country_id:"الدولة",university_id:"الجامعة",stage_id:"المرحلة",title:"العنوان",lecture_number:"رقم المحاضرة",course_id:"الكورس",lecturer_id:"المدرس",lecture_id:"المحاضرة",file_type:"نوع الملف",file_url:"رابط الملف",provider_id:"معرّف مزود الملف",full_name:"الاسم الكامل",phone:"الهاتف",email:"البريد",auth_user_id:"Auth User ID",student_id:"الطالب",expires_at:"ينتهي في",description:"الوصف",image_url:"رابط الصورة",student_name:"اسم الطالب",primary_phone:"الهاتف الأساسي",backup_phone:"الهاتف الاحتياطي",landline:"الأرضي",university:"الجامعة",level:"المستوى",study_type:"نوع الدراسة",group_name:"المجموعة",specialization:"التخصص",subjects:"المواد",notes:"ملاحظات"})[k]||k}
+function label(k){return ({country_id:"الدولة",university_id:"الجامعة",stage_id:"المرحلة",name:"الاسم",code:"الكود",active:"نشط",is_public:"عام",country_id:"الدولة",university_id:"الجامعة",stage_id:"المرحلة",title:"العنوان",lecture_number:"رقم المحاضرة",course_id:"الكورس",lecturer_id:"المدرس",lecture_id:"المحاضرة",file_type:"نوع الملف",file_url:"رابط الملف",provider_id:"معرّف مزود الملف",full_name:"الاسم الكامل",phone:"الهاتف",email:"البريد",auth_user_id:"Auth User ID",student_id:"الطالب",expires_at:"ينتهي في",description:"الوصف",image_url:"رابط الصورة",student_name:"اسم الطالب",primary_phone:"الهاتف الأساسي",backup_phone:"الهاتف الاحتياطي",landline:"الأرضي",university:"الجامعة",level:"المستوى",study_type:"نوع الدراسة",group_name:"المجموعة",specialization:"التخصص",subjects:"المواد",notes:"ملاحظات"})[k]||k}
 function formatCell(table,k,v){
   if(v===null||v===undefined||v==="")return "—";
   if(k==="active"||k==="is_public")return v?'<span class="tag">نعم</span>':'<span class="status">لا</span>';
@@ -398,7 +398,7 @@ async function formHTML(table,record={}){
     courses:["name","code","active","is_public","stage_id","lecturer_id","image_url"],
     lectures:["title","description","lecture_number","active","is_public","course_id","lecturer_id"],
     lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],
-    students:["full_name","phone","email","auth_user_id"],
+    students:["full_name","phone","email","country_id","university_id","stage_id","auth_user_id"],
     student_courses:["student_id","course_id","active","expires_at"],
     registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],
     subjects:["name","description","image_url"],
@@ -436,7 +436,7 @@ async function editRecord(table,record){
 }
 async function formValues(table,record){
   const defs={
-    countries:["name","code","active"],universities:["name","code","active","country_id"],stages:["name","code","active","university_id"],courses:["name","code","active","is_public","stage_id","lecturer_id","image_url"],lectures:["title","description","lecture_number","active","is_public","course_id","lecturer_id"],lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],students:["full_name","phone","email","auth_user_id"],student_courses:["student_id","course_id","active","expires_at"],registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],subjects:["name","description","image_url"],lecturers:["full_name","email","phone","auth_user_id","bio","image_url","active"]
+    countries:["name","code","active"],universities:["name","code","active","country_id"],stages:["name","code","active","university_id"],courses:["name","code","active","is_public","stage_id","lecturer_id","image_url"],lectures:["title","description","lecture_number","active","is_public","course_id","lecturer_id"],lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],students:["full_name","phone","email","country_id","university_id","stage_id","auth_user_id"],student_courses:["student_id","course_id","active","expires_at"],registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],subjects:["name","description","image_url"],lecturers:["full_name","email","phone","auth_user_id","bio","image_url","active"]
   }[table]||[];
   const out={};
   defs.forEach(k=>{const el=document.getElementById("f_"+k);if(!el)return;let v=el.value;if(k==="active"||k==="is_public")v=v==="true";if(v==="")v=null;if(k==="lecture_number"&&v!==null)v=Number(v);out[k]=v});
