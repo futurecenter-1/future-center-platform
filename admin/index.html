@@ -64,6 +64,40 @@ button{cursor:pointer}
 .mobile{display:none;width:40px;height:40px;border:1px solid var(--line);background:#102f5d;color:#fff;border-radius:10px}.overlay{display:none;position:fixed;inset:0;background:#0009;z-index:25}.overlay.open{display:block}
 @media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
 @media(max-width:700px){.sidebar{transform:translateX(105%);transition:.25s}.sidebar.open{transform:translateX(0)}.main{width:100%;margin:0;padding:11px}.mobile{display:grid;place-items:center}.search{display:none}.hero{min-height:170px;padding:19px}.hero h1{font-size:22px}.hero img{width:90px;height:90px}.stats{gap:8px}.stat{padding:13px}.num{font-size:22px}.trend{display:none}.formgrid{grid-template-columns:1fr}.formgrid .full{grid-column:auto}.profile div:last-child{display:none}.top{top:6px;height:57px}}
+
+/* Approved Future Center mobile dashboard */
+@media(max-width:700px){
+  body{padding-bottom:86px;background:radial-gradient(circle at 85% 0%,#17477a45,transparent 32%),#041329}
+  .brand{padding-bottom:14px}
+  .brand img{width:48px;height:48px}
+  .main{padding:10px 10px 96px}
+  .top{border-radius:14px;background:rgba(8,28,58,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .hero{border-radius:20px;min-height:158px;padding:17px;margin-top:12px;background:linear-gradient(115deg,rgba(4,20,45,.96),rgba(11,48,91,.76)),#09254a}
+  .hero h1{font-size:21px;line-height:1.45}
+  .hero p{font-size:12px;line-height:1.8;max-width:68%}
+  .hero img{width:68px;height:68px;border-width:2px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:11px}
+  .stat{padding:12px;border-radius:15px;background:rgba(10,36,70,.74)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .staticon{width:36px;height:36px;font-size:17px}
+  .label{font-size:11px;line-height:1.5}
+  .num{font-size:24px}
+  .tabs{display:none}
+  .section{margin-top:12px}
+  .panel{padding:12px;border-radius:17px;background:rgba(8,31,60,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .sectionhead h2{font-size:15px}
+  .quick{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .quick button{padding:13px 9px;min-height:86px;text-align:center}
+  .quick span{font-size:23px}
+  .quick b{font-size:11px;line-height:1.6}
+  .table{min-width:620px}
+  .mobile-dock{position:fixed;z-index:60;bottom:10px;left:10px;right:10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:7px;border:1px solid rgba(74,137,201,.55);border-radius:20px;background:rgba(4,22,48,.9);box-shadow:0 12px 36px #0008;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);padding-bottom:calc(7px + env(safe-area-inset-bottom))}
+  .mobile-dock button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:59px;border:1px solid transparent;border-radius:14px;background:transparent;color:#b8cbe4;font-size:10px;font-weight:800}
+  .mobile-dock button span{font-size:21px;line-height:1.2}
+  .mobile-dock button.active{color:#ffc857;border-color:#d99b36;background:linear-gradient(135deg,rgba(255,180,53,.2),rgba(255,115,26,.13));box-shadow:inset 0 0 18px #ffc85712}
+  .modalbox{padding:15px;border-radius:18px}
+}
+@media(min-width:701px){.mobile-dock{display:none}}
+
 </style>
 </head>
 <body>
@@ -131,6 +165,14 @@ button{cursor:pointer}
 
   <section id="appContent" class="section"></section>
 </main>
+
+
+<nav id="mobileDock" class="mobile-dock" aria-label="التنقل السريع">
+  <button class="active" data-dock="overview" onclick="dockGo('overview',this)"><span>⌂</span>الرئيسية</button>
+  <button data-dock="students" onclick="dockGo('students',this)"><span>♙</span>الطلاب</button>
+  <button data-dock="courses" onclick="dockGo('courses',this)"><span>▤</span>الكورسات</button>
+  <button onclick="menu()"><span>☰</span>المزيد</button>
+</nav>
 
 <div id="modal" class="modal">
   <div class="modalbox">
@@ -271,6 +313,12 @@ async function loadTable(cfg){
     </tbody></table></div>`;
   }catch(e){box.innerHTML=`<div class="notice err">تعذر تحميل البيانات: ${esc(e.message)}</div>`}
 }
+
+function dockGo(section,button){
+  document.querySelectorAll('#mobileDock button[data-dock]').forEach(b=>b.classList.toggle('active',b===button));
+  go(section,button);
+}
+
 function label(k){return ({name:"الاسم",code:"الكود",active:"نشط",is_public:"عام",country_id:"الدولة",university_id:"الجامعة",stage_id:"المرحلة",title:"العنوان",lecture_number:"رقم المحاضرة",course_id:"المادة",lecture_id:"المحاضرة",file_type:"نوع الملف",file_url:"رابط الملف",provider_id:"Provider ID",full_name:"الاسم الكامل",phone:"الهاتف",email:"البريد",auth_user_id:"Auth User ID",student_id:"الطالب",expires_at:"ينتهي في",description:"الوصف",image_url:"رابط الصورة",student_name:"اسم الطالب",primary_phone:"الهاتف الأساسي",backup_phone:"الهاتف الاحتياطي",landline:"الأرضي",university:"الجامعة",level:"المستوى",study_type:"نوع الدراسة",group_name:"المجموعة",specialization:"التخصص",subjects:"المواد",notes:"ملاحظات"})[k]||k}
 function formatCell(table,k,v){
   if(v===null||v===undefined||v==="")return "—";
