@@ -53,10 +53,7 @@ create policy lecture_files_public_or_subscribed on public.lecture_files for sel
   or exists (select 1 from public.lecture_files lf join public.lectures l on l.id = lf.lecture_id join public.student_courses sc on sc.course_id = l.course_id where lf.id = lecture_files.id and sc.student_id = auth.uid() and sc.active = true and (sc.expires_at is null or sc.expires_at > now()))
 );
 
--- Dashboard compatibility for the current PIN-protected frontend.
--- IMPORTANT: this keeps admin operations simple but is NOT a production-grade admin security model.
--- Replace these anon management policies later with Supabase Auth + Edge Function/service-role operations.
-drop policy if exists dashboard_students_select on public.students;
-create policy dashboard_students_select on public.students for select to anon using (true);
-drop policy if exists dashboard_student_courses_all on public.student_courses;
-create policy dashboard_student_courses_all on public.student_courses for all to anon using (true) with check (true);
+-- Admin access is intentionally NOT granted to anon.
+-- Apply the versioned migrations in /migrations to install authenticated-admin
+-- policies, secure admin RPCs, site settings, and the public asset bucket.
+-- Never restore anonymous dashboard management policies or a client-side PIN.
