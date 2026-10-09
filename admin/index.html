@@ -110,7 +110,7 @@ button{cursor:pointer}
   <div class="top">
     <button class="mobile" onclick="menu()">☰</button>
     <div class="search">🔎 <input id="globalSearch" placeholder="ابحث في القسم الحالي..." oninput="rerenderCurrent()"></div>
-    <div class="actions"><button class="icon">🔔</button><div class="profile"><div class="avatar">A</div><div><b>Admin</b><small>مدير المنصة</small></div></div></div>
+    <div class="actions"><button class="secondary" onclick="logoutAdmin()">تسجيل الخروج</button><div class="profile"><div class="avatar">FC</div><div><b>Admin</b><small>مدير المنصة</small></div></div></div>
   </div>
 
   <section class="hero">
@@ -242,7 +242,7 @@ async function render(section){
     countries:{title:"🌍 الدول",table:"countries",cols:["name","code","active"],fields:["name","code","active"]},
     universities:{title:"🏫 الجامعات",table:"universities",cols:["name","code","active","country_id"],fields:["name","code","active","country_id"]},
     stages:{title:"🎓 المراحل",table:"stages",cols:["name","code","active","university_id"],fields:["name","code","active","university_id"]},
-    courses:{title:"📚 المواد",table:"courses",cols:["name","code","active","is_public","stage_id"],fields:["name","code","active","is_public","stage_id"]},
+    courses:{title:"📚 المواد",table:"courses",cols:["name","code","active","is_public","stage_id","image_url"],fields:["name","code","active","is_public","stage_id","image_url"]},
     lectures:{title:"🎥 المحاضرات",table:"lectures",cols:["title","lecture_number","active","is_public","course_id"],fields:["title","description","lecture_number","active","is_public","course_id"]},
     files:{title:"📄 الملفات",table:"lecture_files",cols:["title","file_type","file_url","active","lecture_id"],fields:["title","file_type","file_url","provider_id","active","lecture_id"]},
     students:{title:"👨‍🎓 الطلاب",table:"students",cols:["full_name","phone","email","auth_user_id"],fields:["full_name","phone","email","auth_user_id"]},
@@ -289,7 +289,7 @@ async function uploadSiteAsset(input,targetId){
     showSettingsNotice("تم رفع الصورة. اضغط حفظ التعديلات لتطبيقها.","ok");
   }catch(e){showSettingsNotice("تعذر رفع الصورة: "+e.message,"err")}
 }
-function showSettingsNotice(message,type=""){const n=document.getElementById("settingsNotice");if(n){n.textContent=message;n.className="notice "+type}}
+function showSettingsNotice(message,type=""){const n=document.getElementById("settingsNotice");if(n){n.textContent=message;n.className="notice "+type}else if(type==="err")showNotice(message)}
 async function saveOneSetting(key,value){
   const existing=await api("site_settings",{query:"?select=key&key=eq."+encodeURIComponent(key)+"&limit=1"});
   if(existing?.length)await api("site_settings",{method:"PATCH",query:"?key=eq."+encodeURIComponent(key),body:{value,updated_at:new Date().toISOString(),updated_by:adminSession.user.id}});
@@ -370,7 +370,7 @@ async function formHTML(table,record={}){
     countries:["name","code","active"],
     universities:["name","code","active","country_id"],
     stages:["name","code","active","university_id"],
-    courses:["name","code","active","is_public","stage_id"],
+    courses:["name","code","active","is_public","stage_id","image_url"],
     lectures:["title","description","lecture_number","active","is_public","course_id"],
     lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],
     students:["full_name","phone","email","auth_user_id"],
@@ -384,6 +384,7 @@ async function formHTML(table,record={}){
     const req=["name","title","file_type","lecture_id","course_id","stage_id","university_id","student_id","student_id"].includes(k);
     html+=`<label class="${k==="description"||k==="notes"?"full":""}">${label(k)}`;
     if(k==="active"||k==="is_public") html+=`<select class="select" id="f_${k}"><option value="true" ${v!==false?"selected":""}>نعم</option><option value="false" ${v===false?"selected":""}>لا</option></select>`;
+    else if(k==="image_url") html+=`<input class="input" id="f_image_url" value="${esc(v)}" placeholder="رابط الصورة أو ارفع صورة أدناه"><input class="input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="uploadSiteAsset(this,'f_image_url')" style="margin-top:7px"><img id="f_image_url_preview" src="${esc(v)}" alt="" style="display:${v?"block":"none"};max-width:160px;max-height:90px;object-fit:contain;margin-top:7px;border-radius:10px">`;
     else if(optionTables[k]) html+=`<select class="select" id="f_${k}"><option value="">اختر...</option>${await optionsFor(k)}</select>`;
     else if(k==="description"||k==="notes"||k==="subjects") html+=`<textarea class="textarea" id="f_${k}" ${req?"required":""}>${esc(v)}</textarea>`;
     else html+=`<input class="input" id="f_${k}" value="${esc(v)}" ${k==="lecture_number"?"type=\"number\"":""} ${k==="expires_at"?"type=\"datetime-local\"":""} ${req?"required":""}>`;
@@ -409,7 +410,7 @@ async function editRecord(table,record){
 }
 async function formValues(table,record){
   const defs={
-    countries:["name","code","active"],universities:["name","code","active","country_id"],stages:["name","code","active","university_id"],courses:["name","code","active","is_public","stage_id"],lectures:["title","description","lecture_number","active","is_public","course_id"],lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],students:["full_name","phone","email","auth_user_id"],student_courses:["student_id","course_id","active","expires_at"],registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],subjects:["name","description","image_url"]
+    countries:["name","code","active"],universities:["name","code","active","country_id"],stages:["name","code","active","university_id"],courses:["name","code","active","is_public","stage_id","image_url"],lectures:["title","description","lecture_number","active","is_public","course_id"],lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],students:["full_name","phone","email","auth_user_id"],student_courses:["student_id","course_id","active","expires_at"],registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],subjects:["name","description","image_url"]
   }[table]||[];
   const out={};
   defs.forEach(k=>{const el=document.getElementById("f_"+k);if(!el)return;let v=el.value;if(k==="active"||k==="is_public")v=v==="true";if(v==="")v=null;if(k==="lecture_number"&&v!==null)v=Number(v);out[k]=v});
