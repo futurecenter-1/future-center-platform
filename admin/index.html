@@ -147,6 +147,18 @@ const state={section:"overview",cache:{}};
 function authHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":`Bearer ${adminSession?.access_token||SUPABASE_KEY}`,"Content-Type":"application/json","Prefer":"return=representation"}}
 function setAdminSession(s){adminSession=s;sessionStorage.setItem("future_admin_session",JSON.stringify(s))}
 function clearAdminSession(){adminSession=null;sessionStorage.removeItem("future_admin_session")}
+let refreshPromise=null;
+async function refreshAdminSession(){
+ if(!adminSession?.refresh_token)return false;
+ if(!refreshPromise)refreshPromise=(async()=>{
+  try{
+   const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:adminSession.refresh_token})});
+   const next=await r.json();if(!r.ok||!next.access_token)return false;
+   setAdminSession({...adminSession,...next});return true;
+  }catch{return false}finally{refreshPromise=null}
+ })();
+ return refreshPromise;
+}
 async function loginAdmin(e){
  e.preventDefault();const btn=document.getElementById("adminLoginBtn"),err=document.getElementById("pinError");
  btn.disabled=true;btn.textContent="جاري التحقق...";err.textContent="";
@@ -162,10 +174,11 @@ async function loginAdmin(e){
 async function logoutAdmin(){clearAdminSession();document.getElementById("pinLock").style.display="flex";document.getElementById("adminPassword").value="";document.getElementById("adminEmail").value=""}
 async function restoreAdminSession(){
  try{const saved=sessionStorage.getItem("future_admin_session");if(!saved)return false;const s=JSON.parse(saved);if(!s.access_token||!s.user?.id)return false;adminSession=s;
- const res=await fetch(SUPABASE_URL+"/auth/v1/user",{headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+s.access_token}});if(!res.ok){clearAdminSession();return false}
- const roles=await api("user_roles",{query:"?select=role&user_id=eq."+encodeURIComponent(s.user.id)});
+ let res=await fetch(SUPABASE_URL+"/auth/v1/user",{headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token}});
+ if(!res.ok){if(!await refreshAdminSession()){clearAdminSession();return false}res=await fetch(SUPABASE_URL+"/auth/v1/user",{headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token}});if(!res.ok){clearAdminSession();return false}}
+ const roles=await api("user_roles",{query:"?select=role&user_id=eq."+encodeURIComponent(adminSession.user.id)});
  if(!(roles||[]).some(x=>String(x.role||"").toLowerCase()==="admin")){clearAdminSession();return false}
- document.getElementById("pinLock").style.display="none";document.getElementById("adminUserLabel").textContent=s.user.email||"Admin";return true;
+ document.getElementById("pinLock").style.display="none";document.getElementById("adminUserLabel").textContent=adminSession.user.email||"Admin";return true;
  }catch{clearAdminSession();return false}
 }
 
@@ -176,7 +189,10 @@ function openModal(title,body){document.getElementById("modalTitle").textContent
 function closeModal(){document.getElementById("modal").classList.remove("show")}
 
 async function api(table,{method="GET",query="",body=null}={}){
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`,{method,headers:authHeaders(),body:body?JSON.stringify(body):undefined});
+  const url=`${SUPABASE_URL}/rest/v1/${table}${query}`;
+  const send=()=>fetch(url,{method,headers:authHeaders(),body:body?JSON.stringify(body):undefined});
+  let r=await send();
+  if(r.status===401&&await refreshAdminSession())r=await send();
   const t=await r.text();
   if(!r.ok)throw new Error(`${r.status}: ${t}`);
   return t?JSON.parse(t):null;
