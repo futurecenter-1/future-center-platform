@@ -8,6 +8,11 @@ BEGIN
     SELECT schemaname, tablename, policyname
     FROM pg_policies
     WHERE schemaname = 'public'
+      AND tablename IN (
+        'countries', 'universities', 'stages', 'subjects',
+        'students', 'student_courses', 'courses', 'lectures',
+        'lecture_files', 'registrations'
+      )
       AND policyname LIKE 'dashboard_%'
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', p.policyname, p.schemaname, p.tablename);
