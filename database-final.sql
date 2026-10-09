@@ -50,7 +50,16 @@ create policy lectures_public_or_subscribed on public.lectures for select to ano
 drop policy if exists lecture_files_public_or_subscribed on public.lecture_files;
 create policy lecture_files_public_or_subscribed on public.lecture_files for select to anon,authenticated using (
   exists (select 1 from public.lectures l where l.id = lecture_files.lecture_id and l.is_public = true)
-  or exists (select 1 from public.lecture_files lf join public.lectures l on l.id = lf.lecture_id join public.student_courses sc on sc.course_id = l.course_id where lf.id = lecture_files.id and sc.student_id = auth.uid() and sc.active = true and (sc.expires_at is null or sc.expires_at > now()))
+  or exists (
+    select 1
+    from public.lectures l
+    join public.student_courses sc on sc.course_id = l.course_id
+    join public.students st on st.id = sc.student_id
+    where l.id = lecture_files.lecture_id
+      and st.auth_user_id = auth.uid()
+      and sc.active = true
+      and (sc.expires_at is null or sc.expires_at > now())
+  )
 );
 
 -- Admin access is intentionally NOT granted to anon.
