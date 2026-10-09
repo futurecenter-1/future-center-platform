@@ -100,6 +100,7 @@ button{cursor:pointer}
     <button data-section="subscriptions" onclick="go('subscriptions',this)">💳 الاشتراكات</button>
     <button data-section="registrations" onclick="go('registrations',this)">📝 التسجيلات</button>
     <button data-section="subjects" onclick="go('subjects',this)">🗂️ الموضوعات</button>
+    <button data-section="settings" onclick="go('settings',this)">🎨 الصور والتصميم</button>
   </nav>
   <div class="sidefoot">Future Center Platform<br>Admin Control Panel</div>
 </aside>
@@ -133,6 +134,7 @@ button{cursor:pointer}
     <button onclick="go('lectures',this)">المحاضرات</button>
     <button onclick="go('students',this)">الطلاب</button>
     <button onclick="go('subscriptions',this)">الاشتراكات</button>
+    <button onclick="go('settings',this)">الصور والتصميم</button>
   </div>
 
   <section id="appContent" class="section"></section>
@@ -235,6 +237,7 @@ function rerenderCurrent(){render(state.section)}
 async function render(section){
   const c=document.getElementById("appContent");
   if(section==="overview"){c.innerHTML=overviewHTML();return}
+  if(section==="settings"){c.innerHTML=await settingsHTML();return}
   const cfg={
     countries:{title:"🌍 الدول",table:"countries",cols:["name","code","active"],fields:["name","code","active"]},
     universities:{title:"🏫 الجامعات",table:"universities",cols:["name","code","active","country_id"],fields:["name","code","active","country_id"]},
@@ -250,6 +253,56 @@ async function render(section){
   if(!cfg){c.innerHTML="";return}
   c.innerHTML=`<div class="card panel"><div class="sectionhead"><h2>${cfg.title}</h2>${cfg.table==="students"?"<span class=\"notice\">الحسابات تُنشأ من صفحة التسجيل</span>":`<button class="primary" onclick="addRecord('${cfg.table}')">＋ إضافة</button>`}</div><div id="notice"></div><div id="list">جاري التحميل...</div></div>`;
   await loadTable(cfg);
+}
+
+async function settingsHTML(){
+  const rows=await api("site_settings",{query:"?select=key,value"});
+  const values=Object.fromEntries((rows||[]).map(r=>[r.key,r.value||{}]));
+  const brand=values.brand||{},home=values.home||{},theme=values.theme||{};
+  const imageField=(label,id,url)=>`<label class="full">${label}<div class="formgrid" style="align-items:center"><input class="input" id="${id}" value="${esc(url||"")}" placeholder="رابط الصورة بعد الرفع"><input class="input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="uploadSiteAsset(this,'${id}')"></div><img id="${id}_preview" src="${esc(url||"")}" alt="معاينة" style="display:${url?"block":"none"};max-width:180px;max-height:110px;object-fit:contain;margin-top:8px;border-radius:12px"></label>`;
+  return `<div class="card panel"><div class="sectionhead"><h2>🎨 الصور والتصميم</h2><span class="tag">التعديلات تظهر على الموقع</span></div>
+  <div class="notice">ارفع الصور من هنا، عاينها، ثم احفظ. استخدم صورًا تملك حق استخدامها. الحد الأقصى للصورة 10 ميجابايت.</div>
+  <div class="formgrid">
+  <label>اسم المنصة<input class="input" id="set_brand_name" value="${esc(brand.name||"Future Center")}"></label>
+  <label>الوصف أسفل الاسم<input class="input" id="set_brand_subtitle" value="${esc(brand.subtitle||"منصتك التعليمية")}"></label>
+  ${imageField("لوجو السنتر","set_logo_url",brand.logo_url)}
+  <label>عنوان الصفحة الرئيسية<input class="input" id="set_home_title" value="${esc(home.title||"مستقبلك يبدأ من هنا")}"></label>
+  <label>وصف الصفحة الرئيسية<input class="input" id="set_home_subtitle" value="${esc(home.subtitle||"محاضراتك وكورساتك في مكان واحد")}"></label>
+  ${imageField("صورة أو بانر الصفحة الرئيسية","set_home_image_url",home.image_url)}
+  <label>اللون الأساسي<input class="input" id="set_primary" type="color" value="${esc(theme.primary||"#d7ad55")}"></label>
+  <label>لون الخلفية<input class="input" id="set_background" type="color" value="${esc(theme.background||"#071426")}"></label>
+  </div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="primary" onclick="saveSiteSettings()">حفظ التعديلات</button><button class="secondary" onclick="render('settings')">إلغاء التغييرات</button></div><div id="settingsNotice" class="notice" style="margin-top:12px">التعديلات لا تُنشر إلا بعد الحفظ.</div></div>`;
+}
+async function uploadSiteAsset(input,targetId){
+  const file=input.files?.[0];if(!file)return;
+  if(!file.type.startsWith("image/")){showSettingsNotice("اختار ملف صورة فقط.","err");return}
+  if(file.size>10*1024*1024){showSettingsNotice("حجم الصورة أكبر من 10 ميجابايت.","err");input.value="";return}
+  try{
+    showSettingsNotice("جاري رفع الصورة...");
+    const safe=file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(-90)||"image";
+    const path=Date.now()+"-"+safe;
+    const response=await fetch(SUPABASE_URL+"/storage/v1/object/site-assets/"+path,{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token,"Content-Type":file.type,"x-upsert":"false"},body:file});
+    if(!response.ok)throw new Error(await response.text());
+    const url=SUPABASE_URL+"/storage/v1/object/public/site-assets/"+path;
+    const target=document.getElementById(targetId);target.value=url;
+    const preview=document.getElementById(targetId+"_preview");if(preview){preview.src=url;preview.style.display="block"}
+    showSettingsNotice("تم رفع الصورة. اضغط حفظ التعديلات لتطبيقها.","ok");
+  }catch(e){showSettingsNotice("تعذر رفع الصورة: "+e.message,"err")}
+}
+function showSettingsNotice(message,type=""){const n=document.getElementById("settingsNotice");if(n){n.textContent=message;n.className="notice "+type}}
+async function saveOneSetting(key,value){
+  const existing=await api("site_settings",{query:"?select=key&key=eq."+encodeURIComponent(key)+"&limit=1"});
+  if(existing?.length)await api("site_settings",{method:"PATCH",query:"?key=eq."+encodeURIComponent(key),body:{value,updated_at:new Date().toISOString(),updated_by:adminSession.user.id}});
+  else await api("site_settings",{method:"POST",body:{key,value,updated_by:adminSession.user.id}});
+}
+async function saveSiteSettings(){
+  try{
+    showSettingsNotice("جاري حفظ التعديلات...");
+    await saveOneSetting("brand",{name:document.getElementById("set_brand_name").value.trim(),subtitle:document.getElementById("set_brand_subtitle").value.trim(),logo_url:document.getElementById("set_logo_url").value.trim()});
+    await saveOneSetting("home",{title:document.getElementById("set_home_title").value.trim(),subtitle:document.getElementById("set_home_subtitle").value.trim(),image_url:document.getElementById("set_home_image_url").value.trim()});
+    await saveOneSetting("theme",{primary:document.getElementById("set_primary").value,background:document.getElementById("set_background").value});
+    showSettingsNotice("تم حفظ التصميم بنجاح.","ok");
+  }catch(e){showSettingsNotice("فشل حفظ التعديلات: "+e.message,"err")}
 }
 
 function overviewHTML(){
