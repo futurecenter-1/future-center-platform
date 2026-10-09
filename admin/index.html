@@ -201,6 +201,7 @@ async function applyAdminBranding(){
     const hero=document.querySelector(".hero h1");if(hero&&values.home?.title)hero.textContent=values.home.title;
     const heroP=document.querySelector(".hero p");if(heroP&&values.home?.subtitle)heroP.textContent=values.home.subtitle;
     if(values.theme?.primary)document.documentElement.style.setProperty("--gold",values.theme.primary);
+    if(values.theme?.background){document.documentElement.style.setProperty("--bg",values.theme.background);document.body.style.background=`radial-gradient(circle at 90% 5%,#234a7228,transparent 32%),radial-gradient(circle at 5% 95%,#d7ad5510,transparent 28%),${values.theme.background}`}
   }catch{}
 }
 async function startAdmin(){await applyAdminBranding();await render("overview");await loadCounts();}
