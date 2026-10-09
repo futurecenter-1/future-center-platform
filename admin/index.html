@@ -264,8 +264,8 @@ async function render(section){
     countries:{title:"🌍 الدول",table:"countries",cols:["name","code","active"],fields:["name","code","active"]},
     universities:{title:"🏫 الجامعات",table:"universities",cols:["name","code","active","country_id"],fields:["name","code","active","country_id"]},
     stages:{title:"🎓 المراحل",table:"stages",cols:["name","code","active","university_id"],fields:["name","code","active","university_id"]},
-    courses:{title:"📚 المواد",table:"courses",cols:["name","code","active","is_public","stage_id","image_url"],fields:["name","code","active","is_public","stage_id","image_url"]},
-    lectures:{title:"🎥 المحاضرات",table:"lectures",cols:["title","lecture_number","active","is_public","course_id"],fields:["title","description","lecture_number","active","is_public","course_id"]},
+    courses:{title:"📚 الكورسات والمواد",table:"courses",cols:["name","code","active","is_public","stage_id","lecturer_id","image_url"],fields:["name","code","active","is_public","stage_id","lecturer_id","image_url"]},
+    lectures:{title:"🎥 المحاضرات",table:"lectures",cols:["title","lecture_number","active","is_public","course_id","lecturer_id"],fields:["title","description","lecture_number","active","is_public","course_id","lecturer_id"]},
     files:{title:"📄 الملفات",table:"lecture_files",cols:["title","file_type","file_url","active","lecture_id"],fields:["title","file_type","file_url","provider_id","active","lecture_id"]},
     students:{title:"👨‍🎓 الطلاب",table:"students",cols:["full_name","phone","email","auth_user_id"],fields:["full_name","phone","email","auth_user_id"]},
     subscriptions:{title:"💳 الاشتراكات",table:"student_courses",cols:["student_name","course_name","active","expires_at"],fields:["student_id","course_id","active","expires_at"]},
@@ -377,7 +377,8 @@ const optionTables={
  stage_id:{table:"stages",value:"id",text:"name"},
  course_id:{table:"courses",value:"id",text:"name"},
  lecture_id:{table:"lectures",value:"id",text:"title"},
- student_id:{table:"students",value:"id",text:"full_name"}
+ student_id:{table:"students",value:"id",text:"full_name"},
+ lecturer_id:{table:"lecturers",value:"id",text:"full_name"}
 };
 
 async function optionsFor(key){
@@ -394,13 +395,14 @@ async function formHTML(table,record={}){
     countries:["name","code","active"],
     universities:["name","code","active","country_id"],
     stages:["name","code","active","university_id"],
-    courses:["name","code","active","is_public","stage_id","image_url"],
-    lectures:["title","description","lecture_number","active","is_public","course_id"],
+    courses:["name","code","active","is_public","stage_id","lecturer_id","image_url"],
+    lectures:["title","description","lecture_number","active","is_public","course_id","lecturer_id"],
     lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],
     students:["full_name","phone","email","auth_user_id"],
     student_courses:["student_id","course_id","active","expires_at"],
     registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],
-    subjects:["name","description","image_url"]
+    subjects:["name","description","image_url"],
+    lecturers:["full_name","email","phone","bio","image_url","active"]
   }[table]||[];
   let html='<div class="formgrid">';
   for(const k of defs){
@@ -434,7 +436,7 @@ async function editRecord(table,record){
 }
 async function formValues(table,record){
   const defs={
-    countries:["name","code","active"],universities:["name","code","active","country_id"],stages:["name","code","active","university_id"],courses:["name","code","active","is_public","stage_id","image_url"],lectures:["title","description","lecture_number","active","is_public","course_id"],lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],students:["full_name","phone","email","auth_user_id"],student_courses:["student_id","course_id","active","expires_at"],registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],subjects:["name","description","image_url"]
+    countries:["name","code","active"],universities:["name","code","active","country_id"],stages:["name","code","active","university_id"],courses:["name","code","active","is_public","stage_id","image_url"],lectures:["title","description","lecture_number","active","is_public","course_id"],lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],students:["full_name","phone","email","auth_user_id"],student_courses:["student_id","course_id","active","expires_at"],registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],subjects:["name","description","image_url"],lecturers:["full_name","email","phone","bio","image_url","active"]
   }[table]||[];
   const out={};
   defs.forEach(k=>{const el=document.getElementById("f_"+k);if(!el)return;let v=el.value;if(k==="active"||k==="is_public")v=v==="true";if(v==="")v=null;if(k==="lecture_number"&&v!==null)v=Number(v);out[k]=v});
