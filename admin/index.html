@@ -156,7 +156,7 @@ async function loginAdmin(e){
   setAdminSession(s);const roles=await api("user_roles",{query:"?select=role&user_id=eq."+encodeURIComponent(s.user.id)});
   if(!(roles||[]).some(x=>String(x.role||"").toLowerCase()==="admin")){clearAdminSession();throw Error("الحساب ده مش مضاف كمدير للمنصة. يلزم تعيين دور admin له.")}
   document.getElementById("pinLock").style.display="none";document.getElementById("adminUserLabel").textContent=s.user.email||"Admin";await startDashboard();
- }catch(ex){err.textContent=ex.message||"تعذر تسجيل الدخول";clearAdminSession()}
+ }catch(ex){document.getElementById("pinLock").style.display="flex";err.textContent=ex.message||"تعذر تسجيل الدخول";clearAdminSession()}
  finally{btn.disabled=false;btn.textContent="دخول لوحة التحكم"}
 }
 async function logoutAdmin(){clearAdminSession();document.getElementById("pinLock").style.display="flex";document.getElementById("adminPassword").value="";document.getElementById("adminEmail").value=""}
