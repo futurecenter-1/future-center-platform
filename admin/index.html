@@ -218,7 +218,22 @@ function menu(){document.getElementById("sidebar").classList.toggle("open");docu
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function qs(s){return document.querySelector(s)}
 function openModal(title,body){document.getElementById("modalTitle").textContent=title;document.getElementById("modalBody").innerHTML=body;document.getElementById("modal").classList.add("show")}
-function closeModal(){document.getElementById("modal").classList.remove("show")}
+let pendingLectureAssets=[];
+async function cleanupPendingLectureAssets(){
+  const pending=pendingLectureAssets.splice(0);
+  if(!adminSession?.access_token||!pending.length)return;
+  await Promise.allSettled(pending.map(async item=>{
+    const path=item.path.split("/").map(encodeURIComponent).join("/");
+    await fetch(SUPABASE_URL+"/storage/v1/object/lecture-assets/"+path,{
+      method:"DELETE",
+      headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token}
+    });
+  }));
+}
+function closeModal(){
+  document.getElementById("modal").classList.remove("show");
+  void cleanupPendingLectureAssets();
+}
 
 async function api(table,{method="GET",query="",body=null}={}){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`,{method,headers:H,body:body?JSON.stringify(body):undefined});
@@ -428,7 +443,8 @@ async function uploadLectureAsset(input){
     if(!response.ok) throw new Error(await response.text());
     const field=document.getElementById("f_file_url");
     if(field) field.value=path;
-    showNotice("تم رفع الملف بأمان. اضغط «حفظ» لحفظ بياناته وربطه بالمحاضرة.");
+    pendingLectureAssets.push({path,lectureId});
+    showNotice("تم رفع الملف بأمان. اضغط «حفظ» لحفظ بياناته وربطه بالمحاضرة، وإلا سيُحذف الملف عند إغلاق النافذة.");
   }catch(e){showNotice("فشل رفع الملف: "+e.message)}
 }
 async function formHTML(table,record={}){
@@ -533,6 +549,9 @@ async function saveRecord(table,id){
       await api(table,{method,query,body});
     }
 
+    if(table==="lecture_files" && body.file_url){
+      pendingLectureAssets=pendingLectureAssets.filter(item=>item.path!==body.file_url);
+    }
     closeModal();
     await render(state.section);
     await loadCounts();
