@@ -447,7 +447,8 @@ async function formHTML(table,record={}){
   }[table]||[];
   let html='<div class="formgrid">';
   for(const k of defs){
-    const v=record[k]??"";
+    let v=record[k]??"";
+    if(k==="expires_at"&&v){const d=new Date(v);if(!Number.isNaN(d.getTime())){d.setMinutes(d.getMinutes()-d.getTimezoneOffset());v=d.toISOString().slice(0,16)}}
     const req=["name","title","file_type","lecture_id","course_id","stage_id","university_id","student_id","student_id"].includes(k);
     html+=`<label class="${k==="description"||k==="notes"?"full":""}">${label(k)}`;
     if(k==="active"||k==="is_public") html+=`<select class="select" id="f_${k}"><option value="true" ${v!==false?"selected":""}>نعم</option><option value="false" ${v===false?"selected":""}>لا</option></select>`;
@@ -502,7 +503,7 @@ async function formValues(table,record){
     countries:["name","code","active"],universities:["name","code","active","country_id"],stages:["name","code","active","university_id"],courses:["name","code","active","is_public","stage_id","lecturer_id","image_url"],lectures:["title","description","lecture_number","active","is_public","course_id","lecturer_id"],lecture_files:["title","file_type","file_url","provider_id","active","lecture_id"],students:["full_name","phone","email","country_id","university_id","stage_id","auth_user_id"],student_courses:["student_id","course_id","active","expires_at"],registrations:["student_name","primary_phone","backup_phone","landline","email","university","level","study_type","group_name","specialization","subjects","notes"],subjects:["name","description","image_url"],lecturers:["full_name","email","phone","auth_user_id","bio","image_url","active"]
   }[table]||[];
   const out={};
-  defs.forEach(k=>{const el=document.getElementById("f_"+k);if(!el)return;let v=el.value;if(k==="active"||k==="is_public")v=v==="true";if(v==="")v=null;if(k==="lecture_number"&&v!==null)v=Number(v);out[k]=v});
+  defs.forEach(k=>{const el=document.getElementById("f_"+k);if(!el)return;let v=el.value;if(k==="active"||k==="is_public")v=v==="true";if(v==="")v=null;if(k==="lecture_number"&&v!==null)v=Number(v);if(k==="expires_at"&&v!==null){const date=new Date(v);if(Number.isNaN(date.getTime()))throw new Error("تاريخ انتهاء الاشتراك غير صحيح");v=date.toISOString()}out[k]=v});
   return out;
 }
 async function saveRecord(table,id){
