@@ -121,22 +121,37 @@ function openLectureResourceForm(lectureId,kind){
 async function saveLectureResource(e,lectureId,kind){
   e.preventDefault();
   const fd=new FormData(e.target);const title=String(fd.get('title')||'').trim();let url=String(fd.get('file_url')||'').trim();const upload=fd.get('upload_file');
+  if(!title){toast('اكتب اسم الملف أو الفيديو','err');return}
   if(!upload?.size&&!/^https:\/\//i.test(url)){toast('أضف رابط HTTPS أو اختر ملفًا للرفع','err');return}
   if(upload?.size>104857600){toast('الحد الأقصى لحجم الملف 100 ميجابايت','err');return}
+  let uploadedPath='';
   try{
     // Re-check ownership before writing, and store video links in lecture_files (lectures has no video_url column).
     const [l]=await api(`lectures?select=id,course_id& id=eq.${encodeURIComponent(lectureId)}&limit=1`.replace('& id=','&id='));
-    if(!l) throw Error('المحاضرة غير موجودة');
+    if(!l) throw Error('المحاضرة غير موجودة أو لا تملك صلاحية الوصول إليها');
     const me=await api(`lecturers?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
     if(!me.length) throw Error('حساب المحاضر غير مكتمل');
     const owned=await api(`courses?select=id&lecturer_id=eq.${encodeURIComponent(me[0].id)}&id=eq.${encodeURIComponent(l.course_id)}&limit=1`);
     if(!owned.length) throw Error('لا تملك صلاحية تعديل هذه المحاضرة');
     let fileType=kind==='video'?'video':'pdf';
-    if(upload?.size){const safe=upload.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(-90)||'file';url=l.id+'/'+Date.now()+'-'+safe;const up=await fetch(API+'/storage/v1/object/lecture-assets/'+url.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':upload.type||'application/octet-stream','x-upsert':'false'},body:upload});if(!up.ok)throw Error(await up.text());fileType=kind==='video'?'video':(/\.pdf$/i.test(upload.name)?'pdf':'file')}
+    if(upload?.size){
+      const safe=upload.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(-90)||'file';
+      url=l.id+'/'+Date.now()+'-'+safe;uploadedPath=url;
+      const up=await fetch(API+'/storage/v1/object/lecture-assets/'+url.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':upload.type||'application/octet-stream','x-upsert':'false'},body:upload});
+      if(!up.ok)throw Error(await up.text());
+      fileType=kind==='video'?'video':(/\.pdf$/i.test(upload.name)?'pdf':'file');
+    }
     const record={lecture_id:l.id,title,file_url:url,file_type:fileType,active:true};
     await api('lecture_files',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(record)});
+    uploadedPath='';
     document.querySelector('#resourceModal')?.remove();toast(kind==='video'?'تم حفظ رابط الفيديو':'تم حفظ رابط الملف','ok');await render();
-  }catch(err){toast('تعذر الحفظ: '+err.message,'err')}
+  }catch(err){
+    // If storage upload succeeded but metadata insert failed, remove the orphaned object.
+    if(uploadedPath&&session?.access_token){
+      try{await fetch(API+'/storage/v1/object/lecture-assets/'+uploadedPath.split('/').map(encodeURIComponent).join('/'),{method:'DELETE',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token}})}catch{}
+    }
+    toast('تعذر الحفظ: '+err.message,'err')
+  }
 }
 
 async function countLecturesForCourses(courses){
@@ -151,7 +166,19 @@ async function countLecturesForCourses(courses){
 async function count(table){try{const r=await api(`${table}?select=id`);return Array.isArray(r)?r.length:'—'}catch{return '—'}}
 async function coursesPage(mine){let rows=[];try{if(mine){const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);if(me.length){const subs=await api(`student_courses?select=course_id,active,expires_at&student_id=eq.${me[0].id}`);const now=Date.now();const ids=[...new Set(subs.filter(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now)).map(s=>s.course_id))];if(ids.length)rows=await api(`courses?select=id,name,code,is_public,active,stage_id,image_url&id=in.(${ids.join(',')})&active=eq.true&order=name.asc`)} }else rows=await api('courses?select=id,name,code,is_public,active,stage_id,image_url&active=eq.true&order=name.asc')}catch(e){toast('تعذر تحميل الكورسات','err')}return `<section class="hero card"><div class="row"><div><h2>${mine?'كورساتي':'كل الكورسات'}</h2><p class="muted">${mine?'المحتوى المشترك فيه فقط.':'تصفح المواد المتاحة على المنصة.'}</p></div></div></section><section class="grid">${rows.length?rows.map(c=>`<article class="course card"><div class="cover">${c.image_url?`<img src="${esc(c.image_url)}" alt="" style="width:100%;height:100%;object-fit:cover">`:'📚'}</div><div class="body"><span class="tag">${c.is_public?'متاح':'مشتركين فقط'}</span><h3>${esc(c.name)}</h3><p class="muted">إدارة محتوى الكورس ومحاضراته.</p><button class="btn primary" onclick="go('course','${c.id}')">فتح الكورس</button></div></article>`).join(''):`<div class="card empty" style="grid-column:1/-1">لا توجد كورسات لعرضها حالياً.</div>`}</section>`}
 async function coursePage(id){let c,l=[];try{[c]=await api(`courses?select=*&id=eq.${id}&limit=1`);l=await api(`lectures?select=id,title,description,lecture_number,active,is_public&course_id=eq.${id}&active=eq.true&order=lecture_number.asc`)}catch(e){}return `<section class="hero card"><button class="link" onclick="go('courses')">← رجوع</button><h2>${esc(c?.name||'الكورس')}</h2><p class="muted">${esc(c?.code ? 'كود الكورس: '+c.code : 'عرض محاضرات الكورس والمحتوى التعليمي.')}</p></section><section class="card panel"><h3>المحاضرات</h3><div class="list">${l.length?l.map(x=>`<button class="item lecture ${x.is_public?'':'locked'}" onclick="go('lecture','${x.id}')"><div class="icon">${x.is_public?'▶':'🔒'}</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div></button>`).join(''):'<div class="empty">لا توجد محاضرات.</div>'}</div></section>`}
-async function lecturePage(id){let l,files=[];try{[l]=await api(`lectures?select=id,title,description,course_id& id=eq.${encodeURIComponent(id)}&limit=1`.replace('& id=','&id='));files=await api(`lecture_files?select=*&lecture_id=eq.${encodeURIComponent(id)}&active=eq.true`);files=await Promise.all(files.map(async f=>({...f,resolved_url:await resolveLectureFileUrl(f)})))}catch{}const video=files.find(f=>/video|youtube|فيديو/i.test(String(f.file_type||''))&&(f.file_url||f.url||f.external_url));const resources=files.filter(f=>f!==video);return `<section class="hero card"><button class="link" onclick="go('course','${l?.course_id||''}')">← رجوع للكورس</button><h2>${esc(l?.title||'المحاضرة')}</h2><p class="muted">${esc(l?.description||'')}</p></section><section class="card panel"><div class="video">${video?renderVideoResource(video):'<span class="muted">سيظهر الفيديو هنا بعد إضافته من المحاضر.</span>'}</div><h3>الملفات</h3><div class="list">${resources.length?resources.map(f=>`<a class="item" href="${esc(f.resolved_url||f.file_url||f.url||f.external_url||'#')}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`).join(''):'<div class="empty">لا توجد ملفات.</div>'}</div></section>`}
+async function lecturePage(id){
+  let l,files=[];
+  try{
+    [l]=await api(`lectures?select=id,title,description,course_id& id=eq.${encodeURIComponent(id)}&limit=1`.replace('& id=','&id='));
+    if(!l) return `<section class="hero card"><h2>المحاضرة غير متاحة</h2><p class="muted">قد تكون المحاضرة غير نشطة أو تحتاج إلى اشتراك فعّال في الكورس.</p><button class="btn primary" onclick="go('courses')">العودة للكورسات</button></section>`;
+    files=await api(`lecture_files?select=*&lecture_id=eq.${encodeURIComponent(id)}&active=eq.true`);
+    files=await Promise.all(files.map(async f=>({...f,resolved_url:await resolveLectureFileUrl(f)})));
+  }catch(err){
+    return `<section class="hero card"><h2>تعذر فتح المحاضرة</h2><p class="muted">المحتوى غير متاح لحسابك حاليًا، أو حدث خطأ في الاتصال. تأكد من الاشتراك ثم حاول مرة أخرى.</p><button class="btn primary" onclick="go('courses')">العودة للكورسات</button></section>`;
+  }
+  const video=files.find(f=>/video|youtube|فيديو/i.test(String(f.file_type||''))&&(f.file_url||f.url||f.external_url));
+  const resources=files.filter(f=>f!==video);
+  return `<section class="hero card"><button class="link" onclick="go('course','${l.course_id}')">← رجوع للكورس</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">${esc(l.description||'')}</p></section><section class="card panel"><div class="video">${video?renderVideoResource(video):'<span class="muted">سيظهر الفيديو هنا بعد إضافته من المحاضر.</span>'}</div><h3>الملفات</h3><div class="list">${resources.length?resources.map(f=>`<a class="item" href="${esc(f.resolved_url||f.file_url||f.url||f.external_url||'#')}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`).join(''):'<div class="empty">لا توجد ملفات.</div>'}</div></section>`}
 async function lecturersPage(){
   let rows=[];
   try{rows=await api('lecturers?select=id,full_name,bio,image_url&active=eq.true&order=full_name.asc')}catch{}
