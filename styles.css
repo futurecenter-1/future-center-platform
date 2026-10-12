@@ -298,3 +298,94 @@ body{min-height:100%;overscroll-behavior-y:contain}
   .shell>.mobile-bottom-nav{position:fixed!important;transform:translateZ(0)!important;will-change:transform}
   .shell>.mobile-bottom-nav button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 }
+
+
+/* Student app polish: subtle motion, predictable sizing, and touch-friendly spacing */
+.student-shell .page{width:100%;max-width:1040px}
+.student-shell .student-welcome,
+.student-shell .student-search,
+.student-shell .home-section,
+.student-shell .real-course-card,
+.student-shell .recent-lecture,
+.student-shell .empty-state{
+  animation:fc-rise-in .48s cubic-bezier(.2,.7,.2,1) both;
+}
+.student-shell .student-search{animation-delay:.04s}
+.student-shell .home-section:nth-of-type(3){animation-delay:.08s}
+.student-shell .home-section:nth-of-type(4){animation-delay:.12s}
+.student-shell .home-section:nth-of-type(5){animation-delay:.16s}
+.student-shell .glass-panel{
+  border:1px solid rgba(255,255,255,.085);
+  background:linear-gradient(145deg,rgba(17,39,63,.78),rgba(7,20,36,.82));
+  border-radius:22px;
+  padding:clamp(15px,2.5vw,24px);
+  margin-bottom:16px;
+  box-shadow:0 12px 34px rgba(0,0,0,.14);
+}
+.student-shell .home-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.student-shell .home-section-head h2{font-size:clamp(17px,2.4vw,22px);line-height:1.5;margin:2px 0}
+.student-shell .section-kicker{font-size:11px;color:#ffad68;font-weight:800}
+.student-shell .student-search{
+ display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;margin:0 0 18px;
+ border:1px solid rgba(255,255,255,.11);border-radius:17px;
+ background:rgba(9,25,43,.78);box-shadow:0 8px 25px rgba(0,0,0,.12)
+}
+.student-shell .student-search>span{font-size:23px;color:#ffad68;line-height:1}
+.student-shell .student-search input{min-width:0;flex:1;width:100%;border:0;outline:0;background:transparent;color:#f7f9fc;padding:9px 0;font-size:14px}
+.student-shell .student-search input::placeholder{color:#8296ac}
+.student-shell .student-search button{width:39px;height:39px;flex:0 0 39px;border:1px solid rgba(255,173,104,.18);border-radius:12px;background:rgba(255,173,104,.1);color:#ffad68;font-size:20px}
+.student-shell .real-course-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.student-shell .real-course-card{min-width:0;overflow:hidden;border:1px solid rgba(255,255,255,.085);border-radius:18px;background:rgba(4,15,27,.46);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.student-shell .real-course-card:active{transform:scale(.985)}
+.student-shell .real-course-cover{height:clamp(100px,17vw,150px);display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#17395a,#0b1a2d);color:#ffad68;font-size:32px}
+.student-shell .real-course-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.student-shell .real-course-info{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px;min-width:0}
+.student-shell .real-course-info h3{font-size:15px;line-height:1.65;margin:0;overflow-wrap:anywhere}
+.student-shell .real-course-info p{font-size:11px;color:#94a8be;margin:0;min-height:18px}
+.student-shell .real-course-info .btn{width:100%;min-height:42px;padding:9px 10px;font-size:12px;border-radius:12px}
+.student-shell .recent-lecture-list{display:grid;gap:10px}
+.student-shell .recent-lecture{display:flex;align-items:center;gap:12px;min-width:0;padding:12px;border:1px solid rgba(255,255,255,.075);border-radius:16px;background:rgba(3,14,25,.35)}
+.student-shell .recent-lecture>div{min-width:0;flex:1}
+.student-shell .recent-lecture h3{font-size:13px;line-height:1.6;margin:0 0 3px;overflow-wrap:anywhere}
+.student-shell .recent-lecture p{font-size:10px;color:#91a5bb;margin:0}
+.student-shell .recent-lecture .btn{flex:0 0 auto;min-height:38px;padding:8px 10px;font-size:11px;border-radius:11px}
+.student-shell .lecture-play{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:13px;background:rgba(255,173,104,.11);color:#ffad68}
+.student-shell .empty-state{display:flex;align-items:center;gap:14px;padding:17px;border:1px dashed rgba(255,255,255,.13);border-radius:17px;background:rgba(0,0,0,.10)}
+.student-shell .empty-state h3{font-size:14px;margin:0 0 5px}
+.student-shell .empty-state p{font-size:12px;line-height:1.8;color:#9fb0c3;margin:0 0 10px}
+.student-shell .empty-state .btn{min-height:39px;padding:8px 12px;font-size:12px}
+.student-shell .empty-symbol{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:14px;background:rgba(255,173,104,.1);color:#ffad68;font-size:21px}
+.student-shell .student-welcome{transition:border-color .25s ease,box-shadow .25s ease}
+.student-shell .btn,.student-shell .nav button,.student-shell .text-action{transition:transform .18s ease,filter .18s ease,background-color .18s ease}
+.student-shell .btn:active,.student-shell .nav button:active{transform:scale(.97)}
+@keyframes fc-rise-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@media(hover:hover){
+ .student-shell .real-course-card:hover{transform:translateY(-3px);border-color:rgba(255,173,104,.28);box-shadow:0 14px 28px rgba(0,0,0,.2)}
+ .student-shell .btn:hover{filter:brightness(1.06)}
+}
+@media(max-width:600px){
+ .student-shell .page{max-width:100%}
+ .student-shell .glass-panel{padding:14px 12px;border-radius:18px;margin-bottom:13px}
+ .student-shell .home-section-head{align-items:center;margin-bottom:12px}
+ .student-shell .real-course-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .student-shell .real-course-cover{height:104px}
+ .student-shell .real-course-info{padding:10px;gap:7px}
+ .student-shell .real-course-info h3{font-size:12px;line-height:1.6}
+ .student-shell .real-course-info p{font-size:10px}
+ .student-shell .real-course-info .btn{font-size:10px;min-height:38px;padding:8px 5px}
+ .student-shell .recent-lecture{gap:8px;padding:10px}
+ .student-shell .recent-lecture h3{font-size:11px}
+ .student-shell .recent-lecture .btn{font-size:10px;padding:7px 8px;max-width:102px;white-space:normal}
+ .student-shell .empty-state{align-items:flex-start;padding:13px 11px;gap:10px}
+ .student-shell .empty-symbol{width:35px;height:35px;flex-basis:35px;font-size:17px}
+}
+@media(max-width:360px){
+ .student-shell .real-course-grid{grid-template-columns:1fr}
+ .student-shell .real-course-cover{height:125px}
+ .student-shell .recent-lecture{flex-wrap:wrap}
+ .student-shell .recent-lecture .btn{margin-right:auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .student-shell .student-welcome,.student-shell .student-search,.student-shell .home-section,.student-shell .real-course-card,.student-shell .recent-lecture,.student-shell .empty-state{animation:none!important}
+ .student-shell .real-course-card,.student-shell .btn,.student-shell .nav button{transition:none!important}
+}
