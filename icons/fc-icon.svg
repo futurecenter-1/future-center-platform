@@ -4,14 +4,13 @@
  <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff9c3b"/><stop offset="1" stop-color="#f47b24"/></linearGradient>
  <linearGradient id="ivory" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff9e9"/><stop offset="1" stop-color="#f4e9ce"/></linearGradient>
 </defs>
-<rect width="512" height="512" rx="48" fill="url(#blue)"/>
+<rect width="512" height="512" fill="url(#blue)"/>
 <g fill="none" stroke="url(#orange)" stroke-linejoin="miter" stroke-linecap="square">
- <path d="M90 106 L256 32 L422 106 L256 181 Z" stroke-width="13"/>
- <path d="M151 132 V259 Q256 311 361 259 V132" stroke-width="12"/>
- <path d="M190 151 V259 M256 178 V278 M322 151 V259" stroke-width="11"/>
- <path d="M361 132 V188" stroke-width="11"/><circle cx="361" cy="205" r="8" fill="#ff9234" stroke="none"/>
- <path d="M151 259 L256 370 L361 259" stroke-width="12"/>
+ <path d="M145 103 L256 49 L367 103 L256 158 Z" stroke-width="10"/>
+ <path d="M202 124 V252 M229 139 V252 M256 157 V252 M283 139 V252 M310 124 V252" stroke-width="9"/>
+ <path d="M202 252 L256 318 L310 252 Z" stroke-width="9"/>
+ <path d="M310 124 V165" stroke-width="9"/><circle cx="310" cy="180" r="6" fill="#ff9234" stroke="none"/>
 </g>
-<text x="256" y="410" fill="url(#ivory)" font-family="Georgia,'Times New Roman',serif" font-size="67" font-weight="bold" text-anchor="middle" letter-spacing="2">FUTURE</text>
-<text x="256" y="452" fill="#ff9637" font-family="Arial,sans-serif" font-size="17" text-anchor="middle" letter-spacing="5">ACHIVE YOUR DREAM</text>
+<text x="256" y="381" fill="url(#ivory)" font-family="Georgia,'Times New Roman',serif" font-size="74" font-weight="bold" text-anchor="middle" letter-spacing="2">FUTURE</text>
+<text x="256" y="421" fill="#ff9637" font-family="Arial,sans-serif" font-size="14" text-anchor="middle" letter-spacing="4">ACHIVE YOUR DREAM</text>
 </svg>
