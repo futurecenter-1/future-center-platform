@@ -1,10 +1,45 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>إنشاء حساب — Future Center</title><link rel="stylesheet" href="styles.css"></head><body><main class="auth"><section class="auth-card card"><div class="brand"><div class="brand-mark">FC</div><h1>Future <span class="gold">Center</span></h1><p>إنشاء حساب طالب جديد</p></div><form id="form"><div class="field"><label>الاسم بالكامل</label><input class="input" id="full_name" required></div><div class="field"><label>البريد الإلكتروني</label><input class="input" id="email" type="email" required></div><div class="field"><label>رقم الهاتف</label><input class="input" id="phone"></div><div class="field"><label>كلمة المرور</label><input class="input" id="password" type="password" minlength="6" required></div><div class="field"><label>الدولة</label><select class="select" id="country_id" required><option value="">اختر الدولة</option></select></div><div class="field"><label>الجامعة</label><select class="select" id="university_id" required disabled><option value="">اختر الجامعة</option></select></div><div class="field"><label>المرحلة</label><select class="select" id="stage_id" required disabled><option value="">اختر المرحلة</option></select></div><button class="btn primary btn-wide" id="submit">إنشاء الحساب</button><button type="button" class="link" onclick="location.href='login.html'">لدي حساب بالفعل</button></form><div id="msg" class="empty" style="padding:10px"></div></section></main><script src="config.js"></script><script>
-const C=FC_CONFIG, API=C.supabaseUrl.replace(/\/$/,''); const K=C.supabaseKey;
-const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(path,opts={}){const r=await fetch(API+'/rest/v1/'+path,{...opts,headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',...(opts.headers||{})}});if(!r.ok)throw Error(await r.text());return r.status===204?null:r.json()}
-async function auth(path,body){const r=await fetch(API+'/auth/v1/'+path,{method:'POST',headers:{apikey:K,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'تعذر إنشاء الحساب');return j}
-async function countries(){try{const x=await api('countries?select=id,name&active=eq.true&order=name.asc');$('country_id').innerHTML='<option value="">اختر الدولة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){$('msg').textContent='تعذر تحميل الدول'}}
-$('country_id').onchange=async()=>{const u=$('university_id'),s=$('stage_id');u.disabled=s.disabled=true;u.innerHTML='<option>جاري التحميل...</option>';s.innerHTML='<option value="">اختر المرحلة</option>';try{const x=await api(`universities?select=id,name&country_id=eq.${encodeURIComponent($('country_id').value)}&active=eq.true&order=name.asc`);u.innerHTML='<option value="">اختر الجامعة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');u.disabled=false}catch(e){u.innerHTML='<option value="">تعذر التحميل</option>'}};
-$('university_id').onchange=async()=>{const s=$('stage_id');s.disabled=true;s.innerHTML='<option>جاري التحميل...</option>';try{const x=await api(`stages?select=id,name&university_id=eq.${encodeURIComponent($('university_id').value)}&active=eq.true&order=name.asc`);s.innerHTML='<option value="">اختر المرحلة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');s.disabled=false}catch(e){s.innerHTML='<option value="">تعذر التحميل</option>'}};
-$('form').onsubmit=async e=>{e.preventDefault();$('submit').disabled=true;$('msg').textContent='جاري إنشاء الحساب...';try{const j=await auth('signup',{email:$('email').value.trim(),password:$('password').value,data:{full_name:$('full_name').value.trim(),phone:$('phone').value.trim()}});if(j.user){await api('students',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({auth_user_id:j.user.id,full_name:$('full_name').value.trim(),phone:$('phone').value.trim(),email:$('email').value.trim(),country_id:$('country_id').value,university_id:$('university_id').value,stage_id:$('stage_id').value})})}location.href='index.html'}catch(e){$('msg').textContent=e.message;$('submit').disabled=false}};countries();
-</script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>إنشاء حساب — Future Center</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="auth">
+ <section class="auth-card card">
+  <div class="brand"><div class="brand-mark">FC</div><h1>Future <span class="gold">Center</span></h1><p>أنشئ حسابك واستكشف الكورسات قبل الاشتراك</p></div>
+  <form id="form">
+   <div class="field"><label for="email">البريد الإلكتروني</label><input class="input" id="email" type="email" autocomplete="email" required></div>
+   <div class="field"><label for="password">كلمة المرور (8 أحرف على الأقل)</label><input class="input" id="password" type="password" autocomplete="new-password" minlength="8" required></div>
+   <div class="field"><label for="confirm_password">تأكيد كلمة المرور</label><input class="input" id="confirm_password" type="password" autocomplete="new-password" minlength="8" required></div>
+   <label class="terms-option"><input type="checkbox" id="terms" required><span>أوافق على الشروط والأحكام وسياسة الخصوصية</span></label>
+   <button class="btn primary btn-wide" id="submit" type="submit">إنشاء الحساب</button>
+   <button type="button" class="link" onclick="location.href='index.html'">لدي حساب بالفعل — تسجيل الدخول</button>
+  </form>
+  <div id="msg" class="empty" style="padding:10px" aria-live="polite"></div>
+ </section>
+</main>
+<script src="config.js"></script>
+<script>
+const C=FC_CONFIG,API=C.supabaseUrl.replace(/\\/$/,'');
+const $=id=>document.getElementById(id);
+async function auth(path,body){
+ const r=await fetch(API+'/auth/v1/'+path,{method:'POST',headers:{apikey:C.supabaseKey,'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'تعذر إنشاء الحساب');return j;
+}
+$('form').onsubmit=async e=>{
+ e.preventDefault();
+ const email=$('email').value.trim().toLowerCase(),password=$('password').value;
+ if(password!==$('confirm_password').value){$('msg').textContent='كلمتا المرور غير متطابقتين.';return}
+ const submit=$('submit');submit.disabled=true;$('msg').textContent='جاري إنشاء الحساب...';
+ try{
+  const j=await auth('signup',{email,password});
+  if(j.access_token&&j.user){localStorage.setItem('fc_session',JSON.stringify(j));location.href='index.html';return}
+  $('msg').textContent='تم إنشاء الحساب. افتح رسالة التأكيد على بريدك الإلكتروني، ثم سجّل الدخول من الصفحة الرئيسية.';
+  submit.disabled=false;
+ }catch(err){$('msg').textContent=String(err.message||'تعذر إنشاء الحساب');submit.disabled=false}
+};
+</script>
+</body>
+</html>
