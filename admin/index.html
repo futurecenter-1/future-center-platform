@@ -154,8 +154,6 @@ button{cursor:pointer}
   <section class="stats" aria-label="ملخص السنتر">
     <div class="card stat"><div class="staticon">👨‍🎓</div><div class="label">الطلاب</div><div class="num" id="countStudents">—</div></div>
     <div class="card stat"><div class="staticon">🎓</div><div class="label">المحاضرون</div><div class="num" id="countLecturers">—</div></div>
-    <div class="card stat"><div class="staticon">📚</div><div class="label">المواد</div><div class="num" id="countCourses">—</div></div>
-    <div class="card stat"><div class="staticon">🎥</div><div class="label">المحاضرات</div><div class="num" id="countLectures">—</div></div>
     <div class="card stat"><div class="staticon">💳</div><div class="label">الاشتراكات</div><div class="num" id="countSubscriptions">—</div></div>
     <div class="card stat"><div class="staticon">📝</div><div class="label">التسجيلات</div><div class="num" id="countRegistrations">—</div></div>
   </section>
@@ -291,8 +289,6 @@ async function loadCounts(){
   const metrics=[
     ["countStudents",count("students")],
     ["countLecturers",count("lecturers","&active=eq.true")],
-    ["countCourses",count("courses","&active=eq.true")],
-    ["countLectures",count("lectures","&active=eq.true")],
     ["countSubscriptions",count("student_courses","&active=eq.true")],
     ["countRegistrations",count("registrations")]
   ];
