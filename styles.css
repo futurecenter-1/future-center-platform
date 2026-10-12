@@ -286,3 +286,15 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
   .shell>.mobile-bottom-nav{gap:1px!important;padding-inline:4px!important}
   .shell>.mobile-bottom-nav button{font-size:9px!important;padding-inline:1px!important}
 }
+
+
+/* Stabilize iOS viewport and keep navigation outside the scrolling content. */
+html{min-height:100%;background:#06172a}
+body{min-height:100%;overscroll-behavior-y:contain}
+@media screen and (max-width:800px){
+  .shell{position:relative;isolation:isolate;min-height:100vh;min-height:100dvh}
+  .shell .topbar{z-index:2}
+  .shell .page{position:relative;z-index:1;overflow-wrap:anywhere}
+  .shell>.mobile-bottom-nav{position:fixed!important;transform:translateZ(0)!important;will-change:transform}
+  .shell>.mobile-bottom-nav button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+}
