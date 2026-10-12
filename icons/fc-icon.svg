@@ -1,14 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102d4b"/><stop offset=".55" stop-color="#06172b"/><stop offset="1" stop-color="#020812"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0b4"/><stop offset=".28" stop-color="#f5bd5c"/><stop offset=".58" stop-color="#a96522"/><stop offset=".78" stop-color="#ffe3a0"/><stop offset="1" stop-color="#b8752b"/></linearGradient><filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter></defs>
-<rect width="512" height="512" rx="112" fill="url(#bg)"/>
-<circle cx="256" cy="256" r="228" fill="none" stroke="#e8ad52" stroke-width="12" opacity=".22" filter="url(#glow)"/>
-<circle cx="256" cy="256" r="228" fill="none" stroke="url(#gold)" stroke-width="8"/>
-<g fill="none" stroke="url(#gold)" stroke-linejoin="round" stroke-linecap="square">
-<path d="M151 143 L256 96 L361 143 L256 192 Z" stroke-width="15"/>
-<path d="M181 158 V247 Q256 291 331 247 V158" stroke-width="13"/>
-<path d="M210 171 V246 M256 189 V262 M302 171 V246" stroke-width="11"/>
-<path d="M361 145 V199" stroke-width="11"/><path d="M351 216 H371" stroke-width="12"/>
+<defs>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#082b86"/><stop offset="1" stop-color="#06256f"/></linearGradient>
+ <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff9c3b"/><stop offset="1" stop-color="#f47b24"/></linearGradient>
+ <linearGradient id="ivory" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff9e9"/><stop offset="1" stop-color="#f4e9ce"/></linearGradient>
+</defs>
+<rect width="512" height="512" rx="48" fill="url(#blue)"/>
+<g fill="none" stroke="url(#orange)" stroke-linejoin="miter" stroke-linecap="square">
+ <path d="M90 106 L256 32 L422 106 L256 181 Z" stroke-width="13"/>
+ <path d="M151 132 V259 Q256 311 361 259 V132" stroke-width="12"/>
+ <path d="M190 151 V259 M256 178 V278 M322 151 V259" stroke-width="11"/>
+ <path d="M361 132 V188" stroke-width="11"/><circle cx="361" cy="205" r="8" fill="#ff9234" stroke="none"/>
+ <path d="M151 259 L256 370 L361 259" stroke-width="12"/>
 </g>
-<text x="256" y="340" fill="url(#gold)" font-family="Georgia,serif" font-size="66" font-weight="bold" text-anchor="middle" letter-spacing="2">FUTURE</text>
-<text x="256" y="378" fill="#f4d29a" font-family="Arial,sans-serif" font-size="15" text-anchor="middle" letter-spacing="5">ACHIEVE YOUR DREAM</text>
+<text x="256" y="410" fill="url(#ivory)" font-family="Georgia,'Times New Roman',serif" font-size="67" font-weight="bold" text-anchor="middle" letter-spacing="2">FUTURE</text>
+<text x="256" y="452" fill="#ff9637" font-family="Arial,sans-serif" font-size="17" text-anchor="middle" letter-spacing="5">ACHIVE YOUR DREAM</text>
 </svg>
