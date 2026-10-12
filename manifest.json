@@ -13,9 +13,9 @@
   "theme_color": "#071426",
   "icons": [
     {
-      "src": "icons/fc-icon.svg?v=5",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icons/future-center-original-256.jpg?v=6",
+      "sizes": "256x256",
+      "type": "image/jpeg",
       "purpose": "any"
     }
   ]
