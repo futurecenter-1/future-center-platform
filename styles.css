@@ -246,3 +246,43 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
   .shell .topbar > .nav button { transition:background .18s ease,color .18s ease,transform .18s ease; }
   .shell .topbar > .nav button:active { transform:scale(.97); }
 }
+
+
+/* Robust mobile navigation: separate fixed bar outside the header's layout flow */
+.mobile-bottom-nav{display:none}
+@media screen and (max-width:800px){
+  .shell{padding:10px 10px calc(92px + env(safe-area-inset-bottom))!important}
+  .shell .topbar>.desktop-nav{display:none!important}
+  .shell>.mobile-bottom-nav{
+    display:flex!important;position:fixed!important;
+    left:0!important;right:0!important;bottom:0!important;top:auto!important;
+    width:100%!important;height:auto!important;min-height:66px!important;
+    z-index:2147483000!important;
+    flex-direction:row!important;justify-content:space-around!important;align-items:stretch!important;
+    gap:3px!important;margin:0!important;padding:7px 7px calc(7px + env(safe-area-inset-bottom))!important;
+    border:0!important;border-top:1px solid rgba(255,255,255,.18)!important;
+    border-radius:18px 18px 0 0!important;
+    background:rgba(4,13,25,.97)!important;
+    box-shadow:0 -12px 34px rgba(0,0,0,.38)!important;
+    -webkit-backdrop-filter:blur(24px)!important;backdrop-filter:blur(24px)!important;
+    transform:none!important;overflow:visible!important;
+  }
+  .shell>.mobile-bottom-nav button{
+    display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+    justify-content:center!important;align-items:center!important;
+    min-width:0!important;max-width:none!important;min-height:49px!important;
+    margin:0!important;padding:7px 2px!important;
+    border:1px solid transparent!important;border-radius:12px!important;
+    background:transparent!important;color:#d5dce6!important;
+    font-size:10px!important;font-weight:600!important;line-height:1.35!important;
+    white-space:normal!important;text-align:center!important;overflow-wrap:anywhere!important;
+  }
+  .shell>.mobile-bottom-nav button.active{
+    background:linear-gradient(145deg,rgba(231,182,92,.2),rgba(231,182,92,.07))!important;
+    border-color:rgba(231,182,92,.22)!important;color:#f6c86f!important;
+  }
+}
+@media screen and (max-width:390px){
+  .shell>.mobile-bottom-nav{gap:1px!important;padding-inline:4px!important}
+  .shell>.mobile-bottom-nav button{font-size:9px!important;padding-inline:1px!important}
+}
