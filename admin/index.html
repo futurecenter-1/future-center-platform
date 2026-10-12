@@ -77,7 +77,7 @@ button{cursor:pointer}
     <input id="adminEmail" class="pininput" style="letter-spacing:normal;font-size:15px" type="email" autocomplete="username" required placeholder="البريد الإلكتروني">
     <label for="adminPassword" style="display:block;margin-top:12px">كلمة المرور</label>
     <input id="adminPassword" class="pininput" style="letter-spacing:normal;font-size:15px" type="password" autocomplete="current-password" required placeholder="كلمة المرور">
-    <button class="pinbtn" id="adminLoginBtn" type="submit">دخول لوحة التحكم</button>
+    <button class="pinbtn" id="adminLoginBtn" type="button" onclick="loginAdmin(event)">دخول لوحة التحكم</button>
     <div id="pinError" role="alert"></div>
   </form>
 </div>
@@ -199,13 +199,15 @@ async function loginAdmin(event){
   adminLoginInProgress=true;
   const btn=document.getElementById("adminLoginBtn");
   if(btn){btn.disabled=true;btn.textContent="جاري التحقق..."}
-  showLoginError("");
+  showLoginError("بدأ تسجيل الدخول...");
   try{
     const email=document.getElementById("adminEmail").value.trim();
     const password=document.getElementById("adminPassword").value;
+    showLoginError("تم الضغط على الدخول، جاري الاتصال بخدمة تسجيل الدخول...");
     const response=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password})});
     const session=await response.json().catch(()=>({}));
     if(!response.ok) throw new Error(session.msg||session.message||session.error_description||session.error||"فشل تسجيل الدخول. راجع البريد وكلمة المرور.");
+    showLoginError("تم قبول بيانات الدخول، جاري التحقق من صلاحية المدير...");
     const priorSession=adminSession;
     try{
       if(!await verifyAdmin(session)) throw new Error("تم قبول بيانات الدخول لكن الحساب غير مسجل كمدير.");
@@ -214,6 +216,7 @@ async function loginAdmin(event){
       try{await fetch(SUPABASE_URL+"/auth/v1/logout",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+session.access_token}})}catch{}
       throw error;
     }
+    showLoginError("تم التحقق من المدير، جاري تحميل لوحة التحكم...");
     adminSession=session;
     sessionStorage.setItem("fc_admin_session",JSON.stringify(session));
     document.getElementById("pinLock").style.display="none";
