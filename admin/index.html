@@ -159,6 +159,7 @@ button{cursor:pointer}
 const SUPABASE_URL="https://opjitbtxedlvkncsgkbo.supabase.co";
 const SUPABASE_KEY="sb_publishable_NBNUmKVlEqyGlGHdBq5_-g_0axjtwla";
 let adminSession=null;
+let adminLoginInProgress=false;
 const H={"apikey":SUPABASE_KEY,get Authorization(){return "Bearer "+(adminSession?.access_token||SUPABASE_KEY)},"Content-Type":"application/json","Prefer":"return=representation"};
 const state={section:"overview",cache:{}};
 
@@ -194,6 +195,8 @@ async function verifyAdmin(session){
 }
 async function loginAdmin(event){
   event?.preventDefault();
+  if(adminLoginInProgress)return;
+  adminLoginInProgress=true;
   const btn=document.getElementById("adminLoginBtn");
   if(btn){btn.disabled=true;btn.textContent="جاري التحقق..."}
   showLoginError("");
@@ -223,6 +226,7 @@ async function loginAdmin(event){
   }catch(error){
     showLoginError(error.message||"تعذر تسجيل الدخول");
   }finally{
+    adminLoginInProgress=false;
     if(btn){btn.disabled=false;btn.textContent="دخول لوحة التحكم"}
   }
 }
@@ -232,6 +236,7 @@ async function logoutAdmin(){
   document.getElementById("pinLock").style.display="flex";
 }
 async function bootAdmin(){
+  if(adminLoginInProgress)return;
   try{
     const saved=sessionStorage.getItem("fc_admin_session");
     if(saved){const candidate=JSON.parse(saved);if(await verifyAdmin(candidate)){document.getElementById("pinLock").style.display="none";await startAdmin();return}}
