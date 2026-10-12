@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Future Center",
+  "short_name": "Future Center",
+  "description": "منصتك التعليمية - Future Center",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#071426",
+  "theme_color": "#071426",
+  "icons": [
+    {
+      "src": "icons/fc-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
