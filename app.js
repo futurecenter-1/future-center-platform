@@ -175,12 +175,6 @@ async function studentPage(){
   const displayName=studentName?studentName.split(/\s+/)[0]:'طالبنا';
   return `<section class="student-hero"><div class="student-hero-copy"><span class="eyebrow">FUTURE CENTER · منصتك التعليمية</span><h1>مرحبًا بك</h1><strong class="student-name">${esc(displayName)}</strong><p>تابع محاضراتك واستمر في رحلتك التعليمية مع فيوتشر.</p></div><div class="student-hero-mark">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="Future Center">`:'<img src="./icons/future-center-192.png?v=8" alt="Future Center">'}<span>FUTURE CENTER</span></div></section>
   <section class="student-search"><span>⌕</span><input id="course-search" type="search" placeholder="ابحث عن كورس أو مادة..." oninput="filterStudentCourses(this.value)"><button type="button" onclick="go('catalog')" aria-label="بحث">⌕</button></section>
-  <section class="discovery-shortcuts">
-   <button class="shortcut-card" onclick="go('catalog')"><span>▱</span><b>جميع الكورسات</b><small>تصفح المتاح</small></button>
-   <button class="shortcut-card" onclick="go('catalog')"><span>⌂</span><b>الكلية</b><small>اختر كليتك</small></button>
-   <button class="shortcut-card" onclick="go('catalog')"><span>⌖</span><b>الجامعة</b><small>اختر جامعتك</small></button>
-   <button class="shortcut-card" onclick="go('catalog')"><span>♟</span><b>الفرقة الدراسية</b><small>حسب مرحلتك</small></button>
-  </section>
   <section class="home-section glass-panel"><div class="home-section-head"><div><span class="section-kicker">مسارك الدراسي</span><h2>كورساتي المسجلة <span class="round-icon">◆</span></h2></div><button class="text-action" onclick="go('courses')">عرض الكل ←</button></div>
    ${myCourses.length?`<div class="real-course-grid">${myCourses.slice(0,4).map(x=>`<article class="real-course-card" data-course-search="${esc((x.name||'')+' '+(x.code||''))}"><div class="real-course-cover">${x.image_url?`<img src="${esc(x.image_url)}" alt="">`:'<span>▤</span>'}</div><div class="real-course-info"><h3>${esc(x.name)}</h3><p>${esc(x.code||'كورس مسجل')}</p><button class="btn primary" onclick="go('course','${x.id}')">متابعة الكورس ▶</button></div></article>`).join('')}</div>`:`<div class="empty-state"><span class="empty-symbol">▤</span><div><h3>كورساتك هتظهر هنا</h3><p>لسه مفيش كورسات مرتبطة بحسابك. أول ما يتم تسجيلك في كورس، هتلاقيه هنا تلقائيًا.</p><button class="btn secondary" onclick="go('catalog')">استكشف الكورسات</button></div></div>`}
   </section>
