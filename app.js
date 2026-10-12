@@ -40,7 +40,24 @@ async function chooseRole(){
       }
     }catch{state.role='student'}
   }
+  if(state.role==='student'){try{await ensureStudentProfile()}catch(e){toast('تم تسجيل الدخول لكن تعذر إنشاء ملف الطالب: '+e.message,'err')}}
   try{ await render(); }catch(e){ state.role='student'; try{await render()}catch{} }
+}
+async function ensureStudentProfile(){
+  if(!session?.user?.id) return;
+  const existing=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
+  if(existing?.length) return;
+  const meta=session.user.user_metadata||{};
+  const payload={
+    auth_user_id:session.user.id,
+    full_name:String(meta.full_name||session.user.email||'طالب جديد').trim(),
+    email:String(session.user.email||'').trim().toLowerCase(),
+    phone:meta.phone||null,
+    country_id:meta.country_id||null,
+    university_id:meta.university_id||null,
+    stage_id:meta.stage_id||null
+  };
+  await api('students',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
 }
 function navFor(role){
   if(role==='student') return `<button class="${state.view==='home'?'active':''}" onclick="go('home')">الرئيسية</button><button class="${state.view==='courses'?'active':''}" onclick="go('courses')">كورساتي</button><button class="${state.view==='catalog'?'active':''}" onclick="go('catalog')">كل الكورسات</button><button class="${state.view==='lecturers'?'active':''}" onclick="go('lecturers')">الدكاترة</button><button class="${state.view==='profile'?'active':''}" onclick="go('profile')">حسابي</button>`;
