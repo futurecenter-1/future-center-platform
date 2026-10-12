@@ -151,3 +151,46 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 @media(max-width:380px){.oauth-row{grid-template-columns:1fr}.auth-logo strong{font-size:21px}.auth-card{padding:16px 12px}.student-hero h1{font-size:26px}.student-shell .brand-mini b{font-size:12px}}
 
 .auth-page,.student-shell{position:relative;z-index:1}
+
+
+/* Shared polish for every student and lecturer screen */
+:root{--gold:#e7b65c;--gold-strong:#f4c76d;--navy:#071426}
+.student-shell .page{width:min(100%,1180px);margin-inline:auto}
+.student-shell .hero.card,.student-shell .panel.card,.student-shell .card.panel{
+ background:linear-gradient(135deg,rgba(205,193,177,.15),rgba(8,25,43,.84));
+ border:1px solid rgba(255,255,255,.22);border-radius:22px;box-shadow:0 14px 38px rgba(0,0,0,.18);backdrop-filter:blur(18px)
+}
+.student-shell .hero.card{padding:clamp(18px,3vw,30px);margin-bottom:14px}
+.student-shell .hero h2,.student-shell .panel h3{color:#fff;line-height:1.5}
+.student-shell .muted,.student-shell .hero .muted{color:#c6d0dc;line-height:1.8}
+.student-shell .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:15px}
+.student-shell .course.card{overflow:hidden;min-width:0;background:linear-gradient(145deg,rgba(204,191,174,.15),rgba(6,20,36,.88));border:1px solid rgba(255,255,255,.2);border-radius:18px;box-shadow:0 10px 26px rgba(0,0,0,.17)}
+.student-shell .course .cover{height:130px;display:grid;place-items:center;background:linear-gradient(135deg,#173d5d,#07182a);color:var(--gold);font-size:34px;overflow:hidden}
+.student-shell .course .body{padding:16px}
+.student-shell .tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:rgba(231,182,92,.14);border:1px solid rgba(231,182,92,.3);color:#f2c66d;font-size:11px}
+.student-shell .btn.primary{background:linear-gradient(135deg,#f4ca75,#c9953f);color:#142337;border:1px solid rgba(255,224,158,.6);font-weight:800}
+.student-shell .btn.secondary,.student-shell .link,.student-shell .text-action{color:#f1c66f}
+.student-shell .panel .list{display:flex;flex-direction:column;gap:8px}
+.student-shell .item{min-width:0;display:flex;align-items:center;gap:12px;padding:13px;border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(3,16,29,.38);color:#fff;text-align:right}
+.student-shell .item-main{flex:1;min-width:0}
+.student-shell .item-main b,.student-shell .item-main small{overflow-wrap:anywhere}
+.student-shell .item-main small{display:block;color:#b9c6d5;margin-top:4px}
+.student-shell .video{overflow:hidden;border-radius:16px;min-height:190px;background:#020811;display:grid;place-items:center;margin:12px 0 18px}
+.student-shell .video iframe,.student-shell .video video{display:block;width:100%;aspect-ratio:16/9;border:0}
+.student-shell .field{min-width:0}
+.student-shell .input,.student-shell .select,.student-shell .textarea{width:100%;max-width:100%;background:rgba(1,12,24,.55);border:1px solid rgba(255,255,255,.19);border-radius:12px;color:#fff;padding:12px;font:inherit}
+.student-shell .select option{background:#10243a;color:#fff}
+.student-shell .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.student-shell .field label{display:block;color:#d9e0e8;font-size:12px;margin-bottom:6px}
+.student-shell .empty{color:#d4dce5}
+@media(max-width:760px){
+ .student-shell .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .student-shell .course .cover{height:95px}
+ .student-shell .course .body{padding:11px}
+ .student-shell .hero.card{padding:17px 14px;border-radius:18px}
+ .student-shell .grid2{grid-template-columns:1fr;gap:10px}
+ .student-shell .item{gap:8px;padding:10px}
+ .student-shell .item .btn{font-size:10px;padding:8px}
+ .student-shell .video{min-height:150px}
+}
+@media(max-width:360px){.student-shell .grid{grid-template-columns:1fr}.student-shell .real-course-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
