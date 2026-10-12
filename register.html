@@ -22,7 +22,7 @@
 </main>
 <script src="config.js"></script>
 <script>
-const C=FC_CONFIG,API=C.supabaseUrl.replace(/\\/$/,'');
+const C=FC_CONFIG,API=C.supabaseUrl.replace(/\/$/,'');
 const $=id=>document.getElementById(id);
 async function auth(path,body){
  const r=await fetch(API+'/auth/v1/'+path,{method:'POST',headers:{apikey:C.supabaseKey,'Content-Type':'application/json'},body:JSON.stringify(body)});
