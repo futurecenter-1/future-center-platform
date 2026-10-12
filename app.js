@@ -5,7 +5,22 @@ async function api(path,opts={}){const h={'apikey':KEY,'Authorization':`Bearer $
 async function storageRequest(path,opts={}){const r=await fetch(API+'/storage/v1/'+path,{...opts,headers:{apikey:KEY,Authorization:'Bearer '+(session?.access_token||KEY),...(opts.headers||{})}});const t=await r.text();if(!r.ok)throw Error(t||r.statusText);return t?JSON.parse(t):null}
 async function resolveLectureFileUrl(file){const raw=String(file.file_url||file.url||file.external_url||'');if(!raw||/^https:\/\//i.test(raw))return raw;if(!session?.access_token)return '';try{const r=await storageRequest('object/sign/lecture-assets/'+raw.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expiresIn:3600})});const p=r.signedURL||r.signedUrl||'';return p.startsWith('http')?p:API+'/storage/v1'+(p.startsWith('/')?p:'/'+p)}catch{return ''}}
 async function auth(path,body){const r=await fetch(API+'/auth/v1/'+path,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'حدث خطأ');return j}
-function saveSession(s){session=s;localStorage.setItem('fc_session',JSON.stringify(s))}function clearSession(){session=null;localStorage.removeItem('fc_session')}
+function saveSession(s){session=s;localStorage.setItem('fc_session',JSON.stringify(s))}
+function clearSession(){session=null;localStorage.removeItem('fc_session')}
+async function restoreSession(){
+  let saved;try{saved=JSON.parse(localStorage.getItem('fc_session')||'null')}catch{}
+  if(!saved?.access_token){clearSession();return false}
+  if(saved.refresh_token){
+    try{
+      const fresh=await auth('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
+      saveSession(fresh);return true;
+    }catch(e){
+      if(saved.expires_at && saved.expires_at*1000>Date.now()){session=saved;return true}
+      clearSession();return false;
+    }
+  }
+  session=saved;return true;
+}
 function logo(){const b=siteSettings.brand||{};return `<div class="brand-mini">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="" style="width:42px;height:42px;object-fit:contain;border-radius:12px">`:'<div class="mark">FC</div>'}<b>${esc(b.name||'Future Center')}</b></div>`}
 function layout(content,nav=''){return `<div class="shell"><header class="topbar card">${logo()}<nav class="nav">${nav}</nav><button class="btn secondary" onclick="logout()">خروج</button></header><main class="page">${content}</main></div>`}
 function authView(mode='login'){const b=siteSettings.brand||{};return `<div class="auth"><div class="auth-card card"><div class="brand">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="" style="width:76px;height:76px;object-fit:contain;margin:auto">`:'<div class="brand-mark">FC</div>'}<h1>${esc(b.name||'Future Center')}</h1><p>${esc(b.subtitle|| (mode==='login'?'تسجيل الدخول إلى المنصة':'منصتك التعليمية'))}</p></div>${mode==='login'?loginForm():registerForm()}</div></div>`}
@@ -14,7 +29,7 @@ function registerForm(){return `<form onsubmit="doRegister(event)"><div class="f
 async function loadRegisterOptions(){try{const cs=await api('countries?select=id,name&active=eq.true&order=name.asc');document.querySelector('#country_id').innerHTML='<option value="">اختر الدولة</option>'+cs.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}catch(e){toast('تعذر تحميل الدول','err')}}
 async function loadUniversities(id){const el=document.querySelector('#university_id'),st=document.querySelector('#stage_id');el.innerHTML='<option>جاري التحميل...</option>';st.innerHTML='<option value="">اختر المرحلة</option>';if(!id)return;try{const x=await api(`universities?select=id,name&country_id=eq.${encodeURIComponent(id)}&active=eq.true&order=name.asc`);el.innerHTML='<option value="">اختر الجامعة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){toast('تعذر تحميل الجامعات','err')}}
 async function loadStages(id){const el=document.querySelector('#stage_id');el.innerHTML='<option value="">اختر المرحلة</option>';if(!id)return;try{const x=await api(`stages?select=id,name&university_id=eq.${encodeURIComponent(id)}&active=eq.true&order=name.asc`);el.innerHTML='<option value="">اختر المرحلة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){toast('تعذر تحميل المراحل','err')}}
-async function doLogin(e){e.preventDefault();try{const j=await auth('token?grant_type=password',{email:email.value,password:password.value});saveSession(j);await chooseRole();}catch(x){toast(x.message,'err')}}
+async function doLogin(e){e.preventDefault();try{const j=await auth('token?grant_type=password',{email:email.value.trim(),password:password.value});saveSession(j);await chooseRole()}catch(x){const m=String(x?.message||'');if(/email not confirmed/i.test(m))toast('حسابك اتعمل لكن البريد محتاج تفعيل مرة واحدة. استخدم رابط إعادة إرسال التفعيل أو راجع إعدادات التسجيل لتسهيل الدخول.','err');else if(/invalid login credentials/i.test(m))toast('البريد أو كلمة المرور غير صحيحة. لو سجلت حالًا، تأكد أن الحساب مفعّل.','err');else toast(m,'err')}}
 async function doRegister(e){e.preventDefault();try{const body={email:email.value,password:password.value,data:{full_name:full_name.value,phone:phone.value,country_id:country_id.value,university_id:university_id.value,stage_id:stage_id.value}};const j=await auth('signup',body);const user=j.user||(j.id?j:null);const authSession=j.session||j;if(authSession?.access_token&&user){saveSession({...authSession,user});toast('تم إنشاء الحساب بنجاح','ok');await chooseRole()}else{state.view='login';render();toast('تم إنشاء الحساب. راجع بريدك الإلكتروني لتفعيل الحساب ثم سجّل الدخول.','ok')}}catch(x){const m=String(x?.message||'');if(/email rate limit exceeded|rate limit/i.test(m)){toast('تم تجاوز الحد المؤقت لرسائل التفعيل. انتظر قليلًا قبل إعادة المحاولة، أو سجّل الدخول إذا كان الحساب قد أُنشئ بالفعل.','err')}else toast(m,'err')}}
 async function chooseRole(){
   state.role='student';
@@ -212,4 +227,4 @@ async function saveRecord(e,table,id){e.preventDefault();const o={};new FormData
 async function del(table,id){if(!confirm('متأكد من الحذف؟'))return;try{await api(`${table}?id=eq.${id}`,{method:'DELETE'});toast('تم الحذف','ok');render()}catch(x){toast(x.message,'err')}}
 async function logout(){clearSession();state={role:null,view:'login',data:{}};render()}
 async function loadSiteSettings(){try{const rows=await api('site_settings?select=key,value');siteSettings=Object.fromEntries((rows||[]).map(r=>[r.key,r.value||{}]));const theme=siteSettings.theme||{};if(theme.primary)document.documentElement.style.setProperty('--gold',theme.primary);if(theme.background){document.documentElement.style.setProperty('--navy',theme.background);document.body.style.background=`radial-gradient(circle at 20% 0%, #163a61 0, ${theme.background} 42%, #040b14 100%)`}}catch{siteSettings={}}}
-(async()=>{await loadSiteSettings();try{const s=JSON.parse(localStorage.getItem('fc_session')||'null');if(s?.access_token){session=s;await chooseRole()}else render()}catch(e){if(session?.access_token){state.role='student';try{await render()}catch{}}else{clearSession();render()}}})();
+(async()=>{await loadSiteSettings();try{if(await restoreSession())await chooseRole();else render()}catch(e){clearSession();render()}})();
