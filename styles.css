@@ -446,3 +446,39 @@ body{min-height:100%;overscroll-behavior-y:contain}
   .auth-page.login-page .auth-card { flex: 0 0 auto; }
   .auth-page.login-page .auth-footer { flex: 0 0 auto; }
 }
+
+
+/* Final login-screen scroll lock: no vertical page drag when the login fits the viewport. */
+@media (max-width: 760px) {
+  html:has(.auth-page.login-page),
+  body:has(.auth-page.login-page) {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body:has(.auth-page.login-page) #app {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .auth-page.login-page {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+  .auth-page.login-page input,
+  .auth-page.login-page button,
+  .auth-page.login-page a {
+    touch-action: manipulation;
+  }
+}
