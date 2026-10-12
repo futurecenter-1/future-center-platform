@@ -13,10 +13,10 @@
   "theme_color": "#071426",
   "icons": [
     {
-      "src": "icons/fc-icon.svg",
+      "src": "icons/fc-icon.svg?v=3",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
