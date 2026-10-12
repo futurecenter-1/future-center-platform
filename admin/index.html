@@ -374,7 +374,7 @@ async function loadTable(cfg){
     const search=(document.getElementById("globalSearch")?.value||"").toLowerCase();
     const rows=data.filter(r=>!search||cfg.cols.some(k=>String(r[k]??"").toLowerCase().includes(search)));
     box.innerHTML=`<div class="tablewrap"><table class="table"><thead><tr>${cfg.cols.map(k=>`<th>${label(k)}</th>`).join("")}<th>إجراءات</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr>${cfg.cols.map(k=>`<td>${formatCell(cfg.table,k,r[k])}</td>`).join("")}<td>${cfg.table==="students" ? '<span class="mini">حساب مسجل</span>' : `<div class="actionsbtn"><button class="mini" onclick='editRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r)})'>تعديل</button><button class="mini red" onclick='deleteRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r.id)})'>حذف</button></div>`}</td></tr>`).join("")}
+    ${rows.map(r=>`<tr>${cfg.cols.map(k=>`<td>${formatCell(cfg.table,k,r[k])}</td>`).join("")}<td><div class="actionsbtn">${cfg.table==="students" ? `<button class="mini red" onclick='deleteStudentProfile(${JSON.stringify(r.id)},${JSON.stringify(r.full_name||r.email||"الطالب")})'>حذف سجل الطالب</button>` : `<button class="mini" onclick='editRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r)})'>تعديل</button><button class="mini red" onclick='deleteRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r.id)})'>حذف</button>`}</div></td></tr>`).join("")}
     </tbody></table></div>`;
   }catch(e){box.innerHTML=`<div class="notice err">تعذر تحميل البيانات: ${esc(e.message)}</div>`}
 }
@@ -561,6 +561,17 @@ async function deleteRecord(table,id){
   if(!confirm("هل أنت متأكد من حذف هذا العنصر؟"))return;
   try{await api(table,{method:"DELETE",query:`?id=eq.${encodeURIComponent(id)}`});await render(state.section);await loadCounts()}
   catch(e){showNotice("لم يتم الحذف: "+e.message)}
+}
+
+async function deleteStudentProfile(id,name){
+  if(!confirm("هل تريد حذف سجل الطالب "+name+"؟\n\nسيتم حذف سجل الطالب فقط، وليس حساب تسجيل الدخول. إذا كان مرتبطًا باشتراكات، سيُرفض الحذف لحماية البيانات."))return;
+  try{
+    const subs=await api("student_courses",{query:"?select=id&student_id=eq."+encodeURIComponent(id)});
+    if(subs.length)throw new Error("الطالب مرتبط باشتراكات. احذف الاشتراكات أولًا أو احتفظ بالسجل.");
+    await api("students",{method:"DELETE",query:"?id=eq."+encodeURIComponent(id)});
+    await render(state.section);await loadCounts();
+    showNotice("تم حذف سجل الطالب فقط. حساب تسجيل الدخول لم يتم حذفه.");
+  }catch(e){showNotice("لم يتم حذف سجل الطالب: "+e.message)}
 }
 function showNotice(msg){
   const n=document.getElementById("notice");
