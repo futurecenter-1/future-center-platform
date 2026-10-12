@@ -236,14 +236,14 @@ async function logoutAdmin(){
   document.getElementById("pinLock").style.display="flex";
 }
 async function bootAdmin(){
-  if(adminLoginInProgress)return;
-  try{
-    const saved=sessionStorage.getItem("fc_admin_session");
-    if(saved){const candidate=JSON.parse(saved);if(await verifyAdmin(candidate)){document.getElementById("pinLock").style.display="none";await startAdmin();return}}
-  }catch{}
-  adminSession=null;sessionStorage.removeItem("fc_admin_session");
-  document.getElementById("pinLock").style.display="flex";
+  // Always start at the login screen. Avoid a stale session restoration racing
+  // with a fresh login on mobile Safari.
+  adminSession=null;
+  try{sessionStorage.removeItem("fc_admin_session")}catch{}
+  const lock=document.getElementById("pinLock");
+  if(lock)lock.style.display="flex";
 }
+
 async function applyAdminBranding(){
   try{
     const rows=await api("site_settings",{query:"?select=key,value"});
