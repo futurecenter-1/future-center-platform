@@ -23,14 +23,60 @@ async function restoreSession(){
 }
 function logo(){const b=siteSettings.brand||{};return `<div class="brand-mini">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="" style="width:46px;height:46px;object-fit:contain;border-radius:13px">`:'<img class="brand-logo" src="./icons/future-center-192.png?v=8" alt="Future Center" width="46" height="46">'}<b>${esc(b.name||'Future Center')}</b></div>`}
 function layout(content,nav=''){return `<div class="shell ${state.role==='student'?'student-shell':''}"><header class="topbar card">${logo()}<nav class="nav">${nav}</nav><button class="btn secondary" onclick="logout()">خروج</button></header><main class="page">${content}</main></div>`}
-function authView(mode='login'){const b=siteSettings.brand||{};return `<div class="auth"><div class="auth-card card"><div class="brand">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="" style="width:76px;height:76px;object-fit:contain;margin:auto">`:'<div class="brand-mark">FC</div>'}<h1>${esc(b.name||'Future Center')}</h1><p>${esc(b.subtitle|| (mode==='login'?'تسجيل الدخول إلى المنصة':'منصتك التعليمية'))}</p></div>${mode==='login'?loginForm():registerForm()}</div></div>`}
-function loginForm(){return `<form onsubmit="doLogin(event)"><div class="field"><label>البريد الإلكتروني</label><input class="input" id="email" type="email" required autocomplete="email"></div><div class="field"><label>كلمة المرور</label><input class="input" id="password" type="password" required autocomplete="current-password"></div><button class="btn primary btn-wide">دخول</button><button type="button" class="link" onclick="state.view='register';render()">إنشاء حساب طالب</button></form>`}
-function registerForm(){return `<form onsubmit="doRegister(event)"><div class="field"><label>الاسم بالكامل</label><input class="input" id="full_name" required></div><div class="field"><label>البريد الإلكتروني</label><input class="input" id="email" type="email" required></div><div class="field"><label>رقم الهاتف</label><input class="input" id="phone"></div><div class="field"><label>كلمة المرور</label><input class="input" id="password" type="password" minlength="6" required></div><div class="field"><label>الدولة</label><select class="select" id="country_id" onchange="loadUniversities(this.value)" required><option value="">اختر الدولة</option></select></div><div class="field"><label>الجامعة</label><select class="select" id="university_id" onchange="loadStages(this.value)" required><option value="">اختر الجامعة</option></select></div><div class="field"><label>المرحلة</label><select class="select" id="stage_id" required><option value="">اختر المرحلة</option></select></div><button class="btn primary btn-wide">إنشاء الحساب</button><button type="button" class="link" onclick="state.view='login';render()">لدي حساب بالفعل</button></form>`}
+function authView(mode='login'){
+ const b=siteSettings.brand||{},isRegister=mode==='register';
+ return `<div class="auth-page ${isRegister?'register-page':'login-page'}">
+  <div class="auth-backdrop" aria-hidden="true"></div>
+  <header class="auth-brandbar">
+   <div class="auth-logo">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="Future Center">`:'<img src="./icons/future-center-192.png?v=8" alt="Future Center">'}
+    <div><strong>FUTURE</strong><span>CENTER</span></div>
+   </div>
+  </header>
+  <section class="auth-intro">
+   <h1>${isRegister?'إنشاء حساب جديد':'مرحبًا بعودتك'}</h1>
+   <p>${isRegister?'ابدأ رحلتك التعليمية مع منصة فيوتشر':'سجّل الدخول إلى منصتك التعليمية مع فيوتشر'}</p>
+  </section>
+  <section class="auth-card card">
+   <div class="auth-card-title"><span class="auth-title-icon">${isRegister?'♙':'◆'}</span><div><h2>${isRegister?'إنشاء حساب جديد':'تسجيل الدخول'}</h2><p>${isRegister?'ابدأ رحلتك التعليمية':'أهلًا بك في منصة فيوتشر'}</p></div></div>
+   ${isRegister?registerForm():loginForm()}
+  </section>
+  <p class="auth-footer">FUTURE CENTER <span>•</span> منصتك التعليمية</p>
+ </div>`;
+}
+function loginForm(){return `<form class="auth-form" onsubmit="doLogin(event)">
+ <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="email" type="email" required autocomplete="username" placeholder="البريد الإلكتروني"></label>
+ <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="password" type="password" required autocomplete="current-password" placeholder="كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
+ <div class="auth-options"><label class="remember-option"><input type="checkbox" checked> <span>تذكرني</span></label><button type="button" class="text-link" onclick="resetPassword()">نسيت كلمة المرور؟</button></div>
+ <button class="btn primary btn-wide auth-submit">تسجيل الدخول <span aria-hidden="true">↪</span></button>
+ <div class="auth-divider"><span>أو</span></div>
+ <div class="oauth-row"><button type="button" class="oauth-btn" onclick="startOAuth('google')"><span class="google-mark">G</span> الدخول باستخدام Google</button><button type="button" class="oauth-btn" onclick="startOAuth('apple')"><span class="apple-mark">●</span> الدخول باستخدام Apple</button></div>
+ <p class="auth-switch">ليس لديك حساب؟ <button type="button" class="text-link strong" onclick="state.view='register';render()">إنشاء حساب جديد</button></p>
+ </form>`}
+function registerForm(){return `<form class="auth-form register-form" onsubmit="doRegister(event)">
+ <h3 class="form-section-title"><span>♙</span> البيانات الشخصية</h3>
+ <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="full_name" required autocomplete="name" placeholder="الاسم الكامل"></label>
+ <label class="auth-field"><span class="field-icon">✉</span><input class="input" id="email" type="email" required autocomplete="email" placeholder="البريد الإلكتروني"></label>
+ <label class="auth-field"><span class="field-icon">☎</span><input class="input" id="phone" type="tel" autocomplete="tel" placeholder="رقم الهاتف"></label>
+ <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="password" type="password" minlength="6" required autocomplete="new-password" placeholder="كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
+ <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="confirm_password" type="password" minlength="6" required autocomplete="new-password" placeholder="تأكيد كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('confirm_password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
+ <h3 class="form-section-title"><span>◆</span> معلومات الدراسة</h3>
+ <label class="auth-field select-field"><span class="field-icon">▤</span><select class="select" id="country_id" onchange="loadUniversities(this.value)" required><option value="">اختر الدولة</option></select></label>
+ <label class="auth-field select-field"><span class="field-icon">⌂</span><select class="select" id="university_id" onchange="loadStages(this.value)" required><option value="">اختر الجامعة</option></select></label>
+ <label class="auth-field select-field"><span class="field-icon">▥</span><select class="select" id="stage_id" required><option value="">اختر المرحلة الدراسية</option></select></label>
+ <label class="terms-option"><input type="checkbox" id="terms_accept" required><span>أوافق على الشروط والأحكام وسياسة الخصوصية</span></label>
+ <button class="btn primary btn-wide auth-submit">إنشاء الحساب <span aria-hidden="true">♙+</span></button>
+ <div class="auth-divider"><span>أو</span></div>
+ <div class="oauth-row"><button type="button" class="oauth-btn" onclick="startOAuth('google')"><span class="google-mark">G</span> التسجيل باستخدام Google</button><button type="button" class="oauth-btn" onclick="startOAuth('apple')"><span class="apple-mark">●</span> التسجيل باستخدام Apple</button></div>
+ <p class="auth-switch">لديك حساب بالفعل؟ <button type="button" class="text-link strong" onclick="state.view='login';render()">تسجيل الدخول</button></p>
+ </form>`}
+function togglePassword(id,button){const el=document.getElementById(id);if(!el)return;el.type=el.type==='password'?'text':'password';button.textContent=el.type==='password'?'◉':'◎'}
+async function resetPassword(){const el=document.getElementById('email');const email=el?.value?.trim();if(!email){toast('اكتب بريدك الإلكتروني أولًا لإرسال رابط تغيير كلمة المرور','err');el?.focus();return}try{await auth('recover',{email,redirect_to:location.origin+location.pathname});toast('لو البريد مسجل، هيوصلك رابط استعادة كلمة المرور','ok')}catch(e){toast(e.message||'تعذر إرسال رابط الاستعادة','err')}}
+function startOAuth(provider){const redirect=encodeURIComponent(location.origin+location.pathname);location.href=API+'/auth/v1/authorize?provider='+encodeURIComponent(provider)+'&redirect_to='+redirect+'&apikey='+encodeURIComponent(KEY)}
 async function loadRegisterOptions(){try{const cs=await api('countries?select=id,name&active=eq.true&order=name.asc');document.querySelector('#country_id').innerHTML='<option value="">اختر الدولة</option>'+cs.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}catch(e){toast('تعذر تحميل الدول','err')}}
 async function loadUniversities(id){const el=document.querySelector('#university_id'),st=document.querySelector('#stage_id');el.innerHTML='<option>جاري التحميل...</option>';st.innerHTML='<option value="">اختر المرحلة</option>';if(!id)return;try{const x=await api(`universities?select=id,name&country_id=eq.${encodeURIComponent(id)}&active=eq.true&order=name.asc`);el.innerHTML='<option value="">اختر الجامعة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){toast('تعذر تحميل الجامعات','err')}}
 async function loadStages(id){const el=document.querySelector('#stage_id');el.innerHTML='<option value="">اختر المرحلة</option>';if(!id)return;try{const x=await api(`stages?select=id,name&university_id=eq.${encodeURIComponent(id)}&active=eq.true&order=name.asc`);el.innerHTML='<option value="">اختر المرحلة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){toast('تعذر تحميل المراحل','err')}}
 async function doLogin(e){e.preventDefault();try{const j=await auth('token?grant_type=password',{email:email.value.trim(),password:password.value});saveSession(j);await chooseRole()}catch(x){const m=String(x?.message||'');if(/email not confirmed/i.test(m))toast('حسابك اتعمل لكن البريد محتاج تفعيل مرة واحدة. استخدم رابط إعادة إرسال التفعيل أو راجع إعدادات التسجيل لتسهيل الدخول.','err');else if(/invalid login credentials/i.test(m))toast('البريد أو كلمة المرور غير صحيحة. لو سجلت حالًا، تأكد أن الحساب مفعّل.','err');else toast(m,'err')}}
-async function doRegister(e){e.preventDefault();try{const body={email:email.value,password:password.value,data:{full_name:full_name.value,phone:phone.value,country_id:country_id.value,university_id:university_id.value,stage_id:stage_id.value}};const j=await auth('signup',body);const user=j.user||(j.id?j:null);const authSession=j.session||j;if(authSession?.access_token&&user){saveSession({...authSession,user});toast('تم إنشاء الحساب بنجاح','ok');await chooseRole()}else{state.view='login';render();toast('تم إنشاء الحساب. راجع بريدك الإلكتروني لتفعيل الحساب ثم سجّل الدخول.','ok')}}catch(x){const m=String(x?.message||'');if(/email rate limit exceeded|rate limit/i.test(m)){toast('تم تجاوز الحد المؤقت لرسائل التفعيل. انتظر قليلًا قبل إعادة المحاولة، أو سجّل الدخول إذا كان الحساب قد أُنشئ بالفعل.','err')}else toast(m,'err')}}
+async async function doRegister(e){e.preventDefault();if(password.value!==document.getElementById('confirm_password')?.value){toast('كلمتا المرور غير متطابقتين','err');return}try{const body={email:email.value.trim(),password:password.value,data:{full_name:full_name.value.trim(),phone:phone.value.trim(),country_id:country_id.value,university_id:university_id.value,stage_id:stage_id.value}};const j=await auth('signup',body);const user=j.user||(j.id?j:null);const authSession=j.session||j;if(authSession?.access_token&&user){saveSession({...authSession,user});toast('تم إنشاء الحساب بنجاح','ok');await chooseRole()}else{state.view='login';render();toast('تم إنشاء الحساب. لو طلب النظام تأكيد البريد، افتح رابط التأكيد مرة واحدة فقط.','ok')}}catch(x){const m=String(x?.message||'');if(/email rate limit exceeded|rate limit/i.test(m))toast('انتظر قليلًا قبل إعادة المحاولة، أو سجّل الدخول إذا كان الحساب قد أُنشئ بالفعل.','err');else toast(m,'err')}}
 async function chooseRole(){
   state.role='student';
   state.view='home';
@@ -93,7 +139,54 @@ async function render(){
   else html=await studentPage();
   document.querySelector('#app').innerHTML=layout(html,navFor(state.role));
 }
-async function studentPage(){if(state.view==='home'){const b=siteSettings.brand||{},h=siteSettings.home||{};let myCourseCount=0,myLectureCount=0;try{const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);if(me.length){const subs=await api(`student_courses?select=course_id,active,expires_at&student_id=eq.${me[0].id}`);const now=Date.now();const ids=[...new Set(subs.filter(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now)).map(s=>s.course_id))];myCourseCount=ids.length;if(ids.length){const lectures=await api(`lectures?select=id&course_id=in.(${ids.join(',')})`);myLectureCount=lectures.length}}}catch(e){console.warn('تعذر تحميل ملخص الطالب',e)}let publicCourses=[];try{publicCourses=await api('courses?select=id,name,code,image_url&active=eq.true&is_public=eq.true&order=name.asc&limit=3')}catch(e){}return `<section class="student-welcome card"><div class="welcome-copy"><span class="eyebrow">FUTURE CENTER • منصتك التعليمية</span><h1>${esc(h.title||'خطوتك الجاية تبدأ هنا')}</h1><p>${esc(h.subtitle||'مكان واحد لكورساتك ومحاضراتك، من أول محاضرة لحد تحقيق هدفك.')}</p><div class="welcome-actions"><button class="btn primary" onclick="go('catalog')">استكشف الكورسات <span aria-hidden="true">←</span></button><button class="btn welcome-secondary" onclick="go('courses')">كورساتي</button></div></div><div class="welcome-art" aria-hidden="true"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">✦</span></div></section><section class="student-stats"><article class="student-stat card"><span class="stat-icon">▦</span><div><small>كورساتي</small><strong>${myCourseCount}</strong><p>الكورسات المسجل فيها</p></div></article><article class="student-stat card"><span class="stat-icon">▶</span><div><small>محاضراتي</small><strong>${myLectureCount}</strong><p>محاضرات كورساتك</p></div></article></section><section class="section-heading"><div><span class="eyebrow">ابدأ رحلتك</span><h2>اكتشف الكورسات</h2><p class="muted">اختار الكورس المناسب ليك، ومحتواك هيكون دايمًا في مكان واحد.</p></div><button class="text-action" onclick="go('catalog')">عرض الكل ←</button></section>${publicCourses.length?`<section class="grid student-course-grid">${publicCourses.map(x=>`<article class="course card"><div class="cover">${x.image_url?`<img src="${esc(x.image_url)}" alt="" style="width:100%;height:100%;object-fit:cover">`:'📚'}</div><div class="body"><span class="tag">كورس متاح</span><h3>${esc(x.name)}</h3><button class="btn primary btn-wide" onclick="go('course','${x.id}')">عرض التفاصيل</button></div></article>`).join('')}</section>`:`<section class="coming-soon card"><div class="coming-icon">✦</div><div class="coming-copy"><span class="eyebrow">قريبًا على Future Center</span><h3>بنجهّزلك تجربة تعليمية تستاهلها</h3><p>الكورسات الجديدة هتظهر هنا أول ما يتم نشرها. ارجع قريبًا واكتشف محتوى يساعدك تتقدم خطوة بخطوة.</p></div><div class="coming-decoration" aria-hidden="true">FC</div></section>`}`}if(state.view==='courses')return coursesPage(true);if(state.view==='catalog')return coursesPage(false);if(state.view==='lecturers')return lecturersPage();if(state.view==='profile')return profilePage();if(state.view==='course')return coursePage(state.data.id);if(state.view==='lecture')return lecturePage(state.data.id);return ''}
+async function studentPage(){
+ if(state.view==='home'){
+  const b=siteSettings.brand||{},h=siteSettings.home||{};
+  let studentName='',myCourseCount=0,myLectureCount=0,myCourses=[],recentLectures=[];
+  try{
+   const me=await api(`students?select=id,full_name&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);
+   if(me.length){
+    studentName=me[0].full_name||'';
+    const subs=await api(`student_courses?select=course_id,active,expires_at&student_id=eq.${me[0].id}`);
+    const now=Date.now(),ids=[...new Set(subs.filter(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now)).map(s=>s.course_id).filter(Boolean))];
+    myCourseCount=ids.length;
+    if(ids.length){
+     myCourses=await api(`courses?select=id,name,code,image_url&active=eq.true&id=in.(${ids.join(',')})&order=name.asc`);
+     const lectures=await api(`lectures?select=id,title,course_id,created_at&course_id=in.(${ids.join(',')})&order=created_at.desc&limit=3`);
+     recentLectures=lectures||[];myLectureCount=recentLectures.length;
+    }
+   }
+  }catch(e){console.warn('تعذر تحميل بيانات الطالب',e)}
+  let publicCourses=[];
+  try{publicCourses=await api('courses?select=id,name,code,image_url&active=eq.true&is_public=eq.true&order=name.asc&limit=8')}catch(e){}
+  const displayName=studentName?studentName.split(/\s+/)[0]:'طالبنا';
+  return `<section class="student-hero"><div class="student-hero-copy"><span class="eyebrow">FUTURE CENTER · منصتك التعليمية</span><h1>مرحبًا بك</h1><strong class="student-name">${esc(displayName)}</strong><p>تابع محاضراتك واستمر في رحلتك التعليمية مع فيوتشر.</p></div><div class="student-hero-mark">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="Future Center">`:'<img src="./icons/future-center-192.png?v=8" alt="Future Center">'}<span>FUTURE CENTER</span></div></section>
+  <section class="student-search"><span>⌕</span><input id="course-search" type="search" placeholder="ابحث عن كورس أو مادة..." oninput="filterStudentCourses(this.value)"><button type="button" onclick="go('catalog')" aria-label="بحث">⌕</button></section>
+  <section class="discovery-shortcuts">
+   <button class="shortcut-card" onclick="go('catalog')"><span>▱</span><b>جميع الكورسات</b><small>تصفح المتاح</small></button>
+   <button class="shortcut-card" onclick="go('catalog')"><span>⌂</span><b>الكلية</b><small>اختر كليتك</small></button>
+   <button class="shortcut-card" onclick="go('catalog')"><span>⌖</span><b>الجامعة</b><small>اختر جامعتك</small></button>
+   <button class="shortcut-card" onclick="go('catalog')"><span>♟</span><b>الفرقة الدراسية</b><small>حسب مرحلتك</small></button>
+  </section>
+  <section class="home-section glass-panel"><div class="home-section-head"><div><span class="section-kicker">مسارك الدراسي</span><h2>كورساتي المسجلة <span class="round-icon">◆</span></h2></div><button class="text-action" onclick="go('courses')">عرض الكل ←</button></div>
+   ${myCourses.length?`<div class="real-course-grid">${myCourses.slice(0,4).map(x=>`<article class="real-course-card" data-course-search="${esc((x.name||'')+' '+(x.code||''))}"><div class="real-course-cover">${x.image_url?`<img src="${esc(x.image_url)}" alt="">`:'<span>▤</span>'}</div><div class="real-course-info"><h3>${esc(x.name)}</h3><p>${esc(x.code||'كورس مسجل')}</p><button class="btn primary" onclick="go('course','${x.id}')">متابعة الكورس ▶</button></div></article>`).join('')}</div>`:`<div class="empty-state"><span class="empty-symbol">▤</span><div><h3>كورساتك هتظهر هنا</h3><p>لسه مفيش كورسات مرتبطة بحسابك. أول ما يتم تسجيلك في كورس، هتلاقيه هنا تلقائيًا.</p><button class="btn secondary" onclick="go('catalog')">استكشف الكورسات</button></div></div>`}
+  </section>
+  <section class="home-section glass-panel"><div class="home-section-head"><div><span class="section-kicker">تابع من حيث توقفت</span><h2>أحدث المحاضرات <span class="round-icon">▶</span></h2></div><button class="text-action" onclick="go('courses')">محاضراتي ←</button></div>
+   ${recentLectures.length?`<div class="recent-lecture-list">${recentLectures.map(l=>`<article class="recent-lecture"><span class="lecture-play">▶</span><div><h3>${esc(l.title||'محاضرة')}</h3><p>محاضرة من كورساتك</p></div><button class="btn primary" onclick="go('lecture','${l.id}')">مشاهدة الآن</button></article>`).join('')}</div>`:`<div class="empty-state compact"><span class="empty-symbol">▶</span><div><h3>المحاضرات هتظهر هنا</h3><p>لما يتم نشر المحاضرات وربطها بكورساتك، هتقدر توصل لها من هنا مباشرة.</p></div></div>`}
+  </section>
+  <section class="home-section glass-panel"><div class="home-section-head"><div><span class="section-kicker">اكتشف محتوى جديد</span><h2>جميع الكورسات <span class="round-icon">▤</span></h2></div><button class="text-action" onclick="go('catalog')">عرض الكل ←</button></div>
+   ${publicCourses.length?`<div class="real-course-grid catalog-grid">${publicCourses.slice(0,4).map(x=>`<article class="real-course-card" data-course-search="${esc((x.name||'')+' '+(x.code||''))}"><div class="real-course-cover">${x.image_url?`<img src="${esc(x.image_url)}" alt="">`:'<span>▤</span>'}</div><div class="real-course-info"><h3>${esc(x.name)}</h3><p>${esc(x.code||'كورس متاح')}</p><button class="btn primary" onclick="go('course','${x.id}')">تفاصيل الكورس</button></div></article>`).join('')}</div>`:`<div class="empty-state"><span class="empty-symbol">✦</span><div><h3>بنجهّزلك محتوى يليق بطموحك</h3><p>الكورسات هتظهر هنا فور نشرها. مفيش محتوى تجريبي أو كورسات وهمية؛ هتشوف الكورسات الحقيقية المتاحة فقط.</p></div></div>`}
+  </section>`;
+ }
+ if(state.view==='courses')return coursesPage(true);
+ if(state.view==='catalog')return coursesPage(false);
+ if(state.view==='lecturers')return lecturersPage();
+ if(state.view==='profile')return profilePage();
+ if(state.view==='course')return coursePage(state.data.id);
+ if(state.view==='lecture')return lecturePage(state.data.id);
+ return '';
+}
+function filterStudentCourses(q){const v=String(q||'').trim().toLocaleLowerCase();document.querySelectorAll('[data-course-search]').forEach(el=>{el.style.display=el.dataset.courseSearch.toLocaleLowerCase().includes(v)?'':'none'})}
 async function lecturerPage(){
   let courses=[];
   try{
@@ -227,4 +320,4 @@ async function saveRecord(e,table,id){e.preventDefault();const o={};new FormData
 async function del(table,id){if(!confirm('متأكد من الحذف؟'))return;try{await api(`${table}?id=eq.${id}`,{method:'DELETE'});toast('تم الحذف','ok');render()}catch(x){toast(x.message,'err')}}
 async function logout(){clearSession();state={role:null,view:'login',data:{}};render()}
 async function loadSiteSettings(){try{const rows=await api('site_settings?select=key,value');siteSettings=Object.fromEntries((rows||[]).map(r=>[r.key,r.value||{}]));const theme=siteSettings.theme||{};if(theme.primary)document.documentElement.style.setProperty('--gold',theme.primary);if(theme.background){document.documentElement.style.setProperty('--navy',theme.background);document.body.style.background=`radial-gradient(circle at 20% 0%, #163a61 0, ${theme.background} 42%, #040b14 100%)`}}catch{siteSettings={}}}
-(async()=>{await loadSiteSettings();try{if(await restoreSession())await chooseRole();else render()}catch(e){clearSession();render()}})();
+(async()=>{await loadSiteSettings();try{const hash=new URLSearchParams(location.hash.replace(/^#/,' '));const at=hash.get('access_token'),rt=hash.get('refresh_token');if(at&&rt){const ur=await fetch(API+'/auth/v1/user',{headers:{apikey:KEY,Authorization:'Bearer '+at}});if(ur.ok){const user=await ur.json();saveSession({access_token:at,refresh_token:rt,user,expires_at:Number(hash.get('expires_at')||0)});history.replaceState(null,'',location.pathname+location.search);}}if(await restoreSession())await chooseRole();else render()}catch(e){clearSession();render()}})();
