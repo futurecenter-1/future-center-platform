@@ -64,6 +64,35 @@ button{cursor:pointer}
 .mobile{display:none;width:40px;height:40px;border:1px solid var(--line);background:#102f5d;color:#fff;border-radius:10px}.mobile-bottom{display:none}.overlay{display:none;position:fixed;inset:0;background:#0009;z-index:25}.overlay.open{display:block}
 @media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
 @media(max-width:700px){body{padding-bottom:88px}.sidebar{transform:translateX(105%);transition:.25s}.sidebar.open{transform:translateX(0)}.main{width:100%;margin:0;padding:9px 9px 100px}.mobile{display:grid;place-items:center}.search{display:none}.hero{min-height:170px;padding:19px}.hero h1{font-size:22px}.hero img{width:90px;height:90px}.stats{gap:8px}.stat{padding:13px}.num{font-size:22px}.trend{display:none}.formgrid{grid-template-columns:1fr}.formgrid .full{grid-column:auto}.profile div:last-child{display:none}.top{top:6px;height:55px;padding:0 9px}.hero{margin-top:10px;min-height:140px;padding:16px;border-radius:18px}.hero h1{font-size:20px;max-width:240px}.hero p{font-size:12px;line-height:1.7;max-width:260px}.hero img{width:64px;height:64px;border-width:2px}.eyebrow{font-size:9px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}.stat{border-radius:14px;padding:12px}.staticon{width:34px;height:34px;font-size:17px}.label{font-size:11px}.num{font-size:23px}.tabs{margin-top:11px}.tabs button{padding:9px 11px;font-size:12px}.sectionhead h2{font-size:16px}.panel{padding:13px}.quick-all{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.quick-all button{padding:12px 7px;min-height:112px;text-align:center;border-radius:13px}.quick-all button span{font-size:31px;min-height:38px}.quick-all button b{font-size:11px;line-height:1.5}.quick-all button small{font-size:9px;line-height:1.5}.quick-panel .sectionhead{align-items:flex-start;flex-direction:column;gap:4px}.mobile-bottom{position:fixed;display:flex;bottom:0;left:0;right:0;z-index:24;justify-content:space-around;gap:2px;padding:8px 5px calc(8px + env(safe-area-inset-bottom));background:rgba(4,20,39,.94);border-top:1px solid #ffffff1a;backdrop-filter:blur(22px);box-shadow:0 -10px 35px #0005}.mobile-bottom button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:#a9bfd9;border-radius:11px;padding:5px 1px;font-size:10px}.mobile-bottom button span{font-size:20px;line-height:1.1}.mobile-bottom button.active{color:#ff842c;background:#ff842c12}.mobile-bottom button.active span{filter:drop-shadow(0 0 5px #ff842c66)}.table{min-width:560px}.section{margin-top:10px}.tabs{width:100%;max-width:100%;gap:9px;padding:2px 1px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}.tabs button{flex:0 0 auto;width:max-content;min-height:48px;padding:12px 15px;font-size:13px}}
+
+/* Mobile dashboard hierarchy: compact stats, premium navigation, readable records */
+@media(max-width:700px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+  .stat{min-height:82px;padding:10px 12px;border-radius:15px;display:grid;grid-template-columns:36px 1fr;grid-template-rows:auto auto;column-gap:10px;align-content:center;align-items:center}
+  .stat .staticon{grid-column:1;grid-row:1/3;width:36px;height:36px;border-radius:11px;font-size:17px}
+  .stat .label{grid-column:2;grid-row:1;margin:0;font-size:11px;align-self:end}
+  .stat .num{grid-column:2;grid-row:2;margin:2px 0 0;font-size:21px;line-height:1.1;align-self:start}
+  .tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;padding:0;overflow:visible;width:100%;max-width:100%}
+  .tabs button{width:100%;min-width:0;min-height:52px;white-space:normal;display:flex;align-items:center;justify-content:center;text-align:center;padding:9px 5px;border-radius:13px;font-size:12px;line-height:1.45;font-weight:800;background:linear-gradient(145deg,#143663,#0e2a50);border:1px solid rgba(113,166,224,.34);box-shadow:0 5px 14px rgba(0,0,0,.18);transition:transform .18s,border-color .18s,background .18s}
+  .tabs button:active{transform:scale(.98)}
+  .tabs button.active{color:#10213a;background:linear-gradient(135deg,#f0cc73,#d7ad55);border-color:#ffe09a;box-shadow:0 5px 18px rgba(215,173,85,.24)}
+  .section{margin-top:12px}
+  #appContent>.panel{padding:12px;border-radius:17px}
+  #appContent .sectionhead{align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  #appContent .sectionhead h2{font-size:17px;line-height:1.5}
+  #appContent .sectionhead .primary{min-height:44px;padding:10px 15px;border-radius:13px;font-size:13px;box-shadow:0 7px 18px rgba(255,132,44,.2)}
+  .tablewrap{overflow:visible}
+  .table{min-width:0;width:100%;border-collapse:separate;border-spacing:0 9px}
+  .table thead{display:none}
+  .table tbody{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  .table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px;padding:12px;border:1px solid rgba(113,166,224,.26);border-radius:14px;background:linear-gradient(145deg,rgba(20,54,99,.72),rgba(10,31,58,.82));box-shadow:0 8px 20px rgba(0,0,0,.14)}
+  .table td{display:flex;flex-direction:column;gap:5px;min-width:0;padding:8px 2px;border:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+  .table td:before{content:attr(data-label);color:#91b3d8;font-size:10px;font-weight:700}
+  .table td:last-child{grid-column:1/-1;border-top:1px solid rgba(113,166,224,.2);margin-top:5px;padding-top:11px}
+  .actionsbtn{display:flex;flex-wrap:wrap;gap:8px}
+  .mini{min-height:38px;padding:8px 12px;border-radius:10px;font-size:11px}
+  .empty{padding:24px 12px}
+}
 </style>
 </head>
 <body>
@@ -372,7 +401,7 @@ async function loadTable(cfg){
     const search=(document.getElementById("globalSearch")?.value||"").toLowerCase();
     const rows=data.filter(r=>!search||cfg.cols.some(k=>String(r[k]??"").toLowerCase().includes(search)));
     box.innerHTML=`<div class="tablewrap"><table class="table"><thead><tr>${cfg.cols.map(k=>`<th>${label(k)}</th>`).join("")}<th>إجراءات</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr>${cfg.cols.map(k=>`<td>${formatCell(cfg.table,k,r[k])}</td>`).join("")}<td><div class="actionsbtn">${(cfg.table==="students"||cfg.table==="lecturers") ? `<button class="mini red" onclick='deleteAuthAccount(${JSON.stringify(r.auth_user_id||"")},${JSON.stringify(r.email||"")},${JSON.stringify(r.full_name||r.email||"الحساب")})'>حذف الحساب</button>` : `<button class="mini" onclick='editRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r)})'>تعديل</button><button class="mini red" onclick='deleteRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r.id)})'>حذف</button>`}</div></td></tr>`).join("")}
+    ${rows.map(r=>`<tr>${cfg.cols.map(k=>`<td data-label="${esc(label(k))}">${formatCell(cfg.table,k,r[k])}</td>`).join("")}<td data-label="إجراءات"><div class="actionsbtn">${(cfg.table==="students"||cfg.table==="lecturers") ? `<button class="mini red" onclick='deleteAuthAccount(${JSON.stringify(r.auth_user_id||"")},${JSON.stringify(r.email||"")},${JSON.stringify(r.full_name||r.email||"الحساب")})'>حذف الحساب</button>` : `<button class="mini" onclick='editRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r)})'>تعديل</button><button class="mini red" onclick='deleteRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r.id)})'>حذف</button>`}</div></td></tr>`).join("")}
     </tbody></table></div>`;
   }catch(e){box.innerHTML=`<div class="notice err">تعذر تحميل البيانات: ${esc(e.message)}</div>`}
 }
