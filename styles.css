@@ -194,3 +194,55 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
  .student-shell .video{min-height:150px}
 }
 @media(max-width:360px){.student-shell .grid{grid-template-columns:1fr}.student-shell .real-course-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Mobile app navigation: pin the primary navigation to the viewport bottom
+   for every authenticated role, independent of the shell's optional role class. */
+@media (max-width: 800px) {
+  body { padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; }
+  .shell { min-height: 100svh; padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+  .shell .topbar { position:relative; display:flex; flex-wrap:nowrap; align-items:center; gap:10px; min-height:60px; padding:9px 12px; margin:0 0 14px; border-radius:18px; }
+  .shell .topbar > .nav {
+    position:fixed !important; inset:auto 0 0 0 !important; top:auto !important;
+    left:0 !important; right:0 !important; bottom:0 !important;
+    z-index:9999 !important; display:flex !important; flex-direction:row;
+    align-items:stretch; justify-content:space-around; gap:3px;
+    width:100% !important; max-width:none !important; min-height:66px;
+    padding:7px 8px calc(7px + env(safe-area-inset-bottom)) !important;
+    margin:0 !important; border:0 !important; border-top:1px solid rgba(255,255,255,.16) !important;
+    border-radius:18px 18px 0 0 !important;
+    background:rgba(5,15,28,.96) !important;
+    box-shadow:0 -10px 35px rgba(0,0,0,.3) !important;
+    -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px);
+    transform:none !important; overflow:visible !important;
+  }
+  .shell .topbar > .nav button {
+    display:flex !important; flex:1 1 0; flex-direction:column; align-items:center; justify-content:center;
+    min-width:0; max-width:none; min-height:48px; margin:0; padding:7px 2px;
+    border:1px solid transparent; border-radius:12px;
+    color:#cbd5e1; background:transparent; white-space:normal;
+    font-size:10px; font-weight:600; line-height:1.3; text-align:center;
+    overflow-wrap:anywhere;
+  }
+  .shell .topbar > .nav button.active,
+  .shell .topbar > .nav button[aria-current="page"] {
+    color:#f4c36d; background:linear-gradient(135deg,rgba(231,182,92,.18),rgba(231,182,92,.06));
+    border-color:rgba(231,182,92,.15);
+  }
+  .shell .topbar > .btn { flex:0 0 auto; min-height:38px; padding:8px 10px; border-radius:12px; font-size:11px; }
+  .shell .page { width:100%; max-width:760px; margin:0 auto; padding-bottom:12px; }
+  .shell .hero.card { padding:22px 19px; border-radius:22px; margin-bottom:14px; }
+  .shell .hero.card h2 { font-size:clamp(24px,6vw,31px); line-height:1.45; margin:0 0 8px; }
+  .shell .hero.card p { font-size:14px; line-height:1.85; }
+  .shell .card.panel, .shell .course.card { border-radius:20px; }
+  .shell .empty { padding:22px 15px; text-align:center; line-height:1.9; }
+}
+@media (max-width: 390px) {
+  .shell .topbar > .nav { gap:1px; padding-inline:4px !important; }
+  .shell .topbar > .nav button { font-size:9px; padding-inline:1px; }
+  .shell .topbar > .btn { font-size:10px; padding-inline:8px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .shell .topbar > .nav button { transition:background .18s ease,color .18s ease,transform .18s ease; }
+  .shell .topbar > .nav button:active { transform:scale(.97); }
+}
