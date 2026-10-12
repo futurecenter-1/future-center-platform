@@ -374,7 +374,7 @@ async function loadTable(cfg){
     const search=(document.getElementById("globalSearch")?.value||"").toLowerCase();
     const rows=data.filter(r=>!search||cfg.cols.some(k=>String(r[k]??"").toLowerCase().includes(search)));
     box.innerHTML=`<div class="tablewrap"><table class="table"><thead><tr>${cfg.cols.map(k=>`<th>${label(k)}</th>`).join("")}<th>إجراءات</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr>${cfg.cols.map(k=>`<td>${formatCell(cfg.table,k,r[k])}</td>`).join("")}<td><div class="actionsbtn">${cfg.table==="students" ? `<button class="mini red" onclick='deleteStudentProfile(${JSON.stringify(r.id)},${JSON.stringify(r.full_name||r.email||"الطالب")})'>حذف سجل الطالب</button>` : `<button class="mini" onclick='editRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r)})'>تعديل</button><button class="mini red" onclick='deleteRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r.id)})'>حذف</button>`}</div></td></tr>`).join("")}
+    ${rows.map(r=>`<tr>${cfg.cols.map(k=>`<td>${formatCell(cfg.table,k,r[k])}</td>`).join("")}<td><div class="actionsbtn">${(cfg.table==="students"||cfg.table==="lecturers") ? `<button class="mini red" onclick='deleteAuthAccount(${JSON.stringify(r.auth_user_id||"")},${JSON.stringify(r.email||"")},${JSON.stringify(r.full_name||r.email||"الحساب")})'>حذف الحساب</button>` : `<button class="mini" onclick='editRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r)})'>تعديل</button><button class="mini red" onclick='deleteRecord(${JSON.stringify(cfg.table)},${JSON.stringify(r.id)})'>حذف</button>`}</div></td></tr>`).join("")}
     </tbody></table></div>`;
   }catch(e){box.innerHTML=`<div class="notice err">تعذر تحميل البيانات: ${esc(e.message)}</div>`}
 }
@@ -563,15 +563,18 @@ async function deleteRecord(table,id){
   catch(e){showNotice("لم يتم الحذف: "+e.message)}
 }
 
-async function deleteStudentProfile(id,name){
-  if(!confirm("هل تريد حذف سجل الطالب "+name+"؟\n\nسيتم حذف سجل الطالب فقط، وليس حساب تسجيل الدخول. إذا كان مرتبطًا باشتراكات، سيُرفض الحذف لحماية البيانات."))return;
+async function deleteAuthAccount(userId,email,name){
+  if(!userId||!email){showNotice("الحساب غير مربوط بتسجيل الدخول أو لا يوجد بريد إلكتروني.");return}
+  if(!confirm("حذف حساب "+name+" ("+email+") بالكامل؟ لن يتم حذف الكورسات والمحاضرات. اكتب البريد للتأكيد."))return;
+  const typed=prompt("اكتب البريد الإلكتروني للتأكيد:",email);
+  if(typed===null)return;
+  if(typed.trim().toLowerCase()!==email.trim().toLowerCase()){showNotice("البريد غير مطابق. لم يتم تنفيذ العملية.");return}
   try{
-    const subs=await api("student_courses",{query:"?select=id&student_id=eq."+encodeURIComponent(id)});
-    if(subs.length)throw new Error("الطالب مرتبط باشتراكات. احذف الاشتراكات أولًا أو احتفظ بالسجل.");
-    await api("students",{method:"DELETE",query:"?id=eq."+encodeURIComponent(id)});
-    await render(state.section);await loadCounts();
-    showNotice("تم حذف سجل الطالب فقط. حساب تسجيل الدخول لم يتم حذفه.");
-  }catch(e){showNotice("لم يتم حذف سجل الطالب: "+e.message)}
+    const response=await fetch(SUPABASE_URL+"/functions/v1/admin-delete-account",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token,"Content-Type":"application/json"},body:JSON.stringify({user_id:userId,confirmation_email:email})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result.error||"تعذر حذف الحساب");
+    await render(state.section);await loadCounts();showNotice("تم حذف الحساب: "+email);
+  }catch(e){showNotice("لم يتم حذف الحساب: "+e.message)}
 }
 function showNotice(msg){
   const n=document.getElementById("notice");
