@@ -67,9 +67,10 @@ button{cursor:pointer}
 
 /* Mobile dashboard hierarchy: compact stats, premium navigation, readable records */
 @media(max-width:700px){
-  /* Compact read-only stats strip */
-  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:8px}
-  .stat{min-width:0;min-height:0;padding:8px 4px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;box-shadow:0 5px 14px rgba(0,0,0,.16)}
+  /* One compact horizontal stats strip */
+  .stats{display:flex;flex-wrap:nowrap;gap:6px;margin-top:8px;overflow-x:auto;overflow-y:hidden;padding:2px 1px 7px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .stats::-webkit-scrollbar{display:none}
+  .stat{flex:0 0 84px;min-width:84px;min-height:0;padding:8px 4px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;box-shadow:0 5px 14px rgba(0,0,0,.16)}
   .stat .staticon{width:25px;height:25px;border-radius:8px;font-size:13px}
   .stat .label{margin:0;font-size:9px;line-height:1.35;white-space:nowrap}
   .stat .num{margin:0;font-size:17px;line-height:1.1}
@@ -128,7 +129,7 @@ button{cursor:pointer}
     <button data-section="lectures" onclick="go('lectures',this)">🎥 المحاضرات</button>
     <button data-section="files" onclick="go('files',this)">📄 الملفات</button>
     <button data-section="students" onclick="go('students',this)">👨‍🎓 الطلاب</button>
-    <button data-section="lecturers" onclick="go('lecturers',this)">👨‍🏫 المدرسون</button>
+    <button data-section="lecturers" onclick="go('lecturers',this)">👨‍🏫 المحاضرون</button>
     <button data-section="subscriptions" onclick="go('subscriptions',this)">💳 الاشتراكات</button>
     <button data-section="registrations" onclick="go('registrations',this)">📝 التسجيلات</button>
     <button data-section="subjects" onclick="go('subjects',this)">🗂️ الموضوعات</button>
@@ -150,11 +151,13 @@ button{cursor:pointer}
     <img data-logo>
   </section>
 
-  <section class="stats">
-    <div class="card stat"><div class="staticon">👨‍🎓</div><div class="label">الطلاب</div><div class="num" id="countStudents">—</div><div class="trend">Students</div></div>
-    <div class="card stat"><div class="staticon">📚</div><div class="label">المواد</div><div class="num" id="countCourses">—</div><div class="trend">Courses</div></div>
-    <div class="card stat"><div class="staticon">🎥</div><div class="label">المحاضرات</div><div class="num" id="countLectures">—</div><div class="trend">Lectures</div></div>
-    <div class="card stat"><div class="staticon">🌍</div><div class="label">الدول</div><div class="num" id="countCountries">—</div><div class="trend">Countries</div></div>
+  <section class="stats" aria-label="ملخص السنتر">
+    <div class="card stat"><div class="staticon">👨‍🎓</div><div class="label">الطلاب</div><div class="num" id="countStudents">—</div></div>
+    <div class="card stat"><div class="staticon">🎓</div><div class="label">المحاضرون</div><div class="num" id="countLecturers">—</div></div>
+    <div class="card stat"><div class="staticon">📚</div><div class="label">المواد</div><div class="num" id="countCourses">—</div></div>
+    <div class="card stat"><div class="staticon">🎥</div><div class="label">المحاضرات</div><div class="num" id="countLectures">—</div></div>
+    <div class="card stat"><div class="staticon">💳</div><div class="label">الاشتراكات</div><div class="num" id="countSubscriptions">—</div></div>
+    <div class="card stat"><div class="staticon">📝</div><div class="label">التسجيلات</div><div class="num" id="countRegistrations">—</div></div>
   </section>
 
   <div class="tabs">
@@ -285,10 +288,18 @@ async function count(table,query=""){
   }catch(e){return "—"}
 }
 async function loadCounts(){
-  document.getElementById("countCountries").textContent=await count("countries","&active=eq.true");
-  document.getElementById("countCourses").textContent=await count("courses","&active=eq.true");
-  document.getElementById("countLectures").textContent=await count("lectures","&active=eq.true");
-  document.getElementById("countStudents").textContent=await count("students");
+  const metrics=[
+    ["countStudents",count("students")],
+    ["countLecturers",count("lecturers","&active=eq.true")],
+    ["countCourses",count("courses","&active=eq.true")],
+    ["countLectures",count("lectures","&active=eq.true")],
+    ["countSubscriptions",count("student_courses","&active=eq.true")],
+    ["countRegistrations",count("registrations")]
+  ];
+  await Promise.all(metrics.map(async ([id,value])=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=await value;
+  }));
 }
 
 function go(section,btn){
