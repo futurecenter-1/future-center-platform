@@ -424,3 +424,25 @@ body{min-height:100%;overscroll-behavior-y:contain}
 .instructor-strip-empty>.empty-state{width:100%;min-width:0;box-sizing:border-box;justify-content:flex-start}
 @media (display-mode: standalone){body{padding-top:env(safe-area-inset-top)}}
 .student-shell .page{padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+
+
+/* Keep login screen steady on mobile; only content pages should scroll. */
+@media (max-width: 760px) {
+  html, body { min-height: 100%; }
+  body:has(.auth-page.login-page) { height: 100%; overflow: hidden; }
+  .auth-page.login-page {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    justify-content: center;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  .auth-page.login-page .auth-brandbar { flex: 0 0 auto; }
+  .auth-page.login-page .auth-intro { flex: 0 0 auto; }
+  .auth-page.login-page .auth-card { flex: 0 0 auto; }
+  .auth-page.login-page .auth-footer { flex: 0 0 auto; }
+}
