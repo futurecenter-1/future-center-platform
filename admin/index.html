@@ -348,10 +348,10 @@ async function saveSiteSettings(){
 function overviewHTML(){
 return `<div class="grid2">
 <div class="card panel"><div class="sectionhead"><h2>⚡ إجراءات سريعة</h2></div><div class="quick">
-<button class="q1" onclick="go('courses')"><span>➕</span><b>إضافة مادة</b></button>
-<button class="q2" onclick="go('lectures')"><span>🎥</span><b>إضافة محاضرة</b></button>
-<button class="q3" onclick="go('students')"><span>👨‍🎓</span><b>إضافة طالب</b></button>
-<button class="q4" onclick="go('countries')"><span>🌍</span><b>إضافة دولة</b></button>
+<button class="q1" type="button" onclick="addRecord('courses')"><span>＋</span><b>إضافة مادة</b></button>
+<button class="q2" type="button" onclick="addRecord('lectures')"><span>▣</span><b>إضافة محاضرة</b></button>
+<button class="q3" type="button" onclick="addRecord('students')"><span>♙</span><b>إضافة طالب</b></button>
+<button class="q4" type="button" onclick="addRecord('countries')"><span>◎</span><b>إضافة دولة</b></button>
 </div></div>
 <div class="card panel"><div class="sectionhead"><h2>🔗 التسلسل التعليمي</h2></div>
 <div class="item"><div class="iicon">🌍</div><div class="itemmain"><b>الدول</b><small>→ الجامعات</small></div></div>
