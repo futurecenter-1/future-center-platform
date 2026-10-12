@@ -69,7 +69,7 @@ button{cursor:pointer}
 <body>
 
 <div id="pinLock">
-  <form class="pinbox" onsubmit="loginAdmin(event); return false;">
+  <form class="pinbox" onsubmit="return false;">
     <div class="pinlogo"><img data-logo></div>
     <h2>Future Center</h2>
     <p>تسجيل دخول الإدارة بحساب موثّق</p>
@@ -77,7 +77,7 @@ button{cursor:pointer}
     <input id="adminEmail" class="pininput" style="letter-spacing:normal;font-size:15px" type="email" autocomplete="username" required placeholder="البريد الإلكتروني">
     <label for="adminPassword" style="display:block;margin-top:12px">كلمة المرور</label>
     <input id="adminPassword" class="pininput" style="letter-spacing:normal;font-size:15px" type="password" autocomplete="current-password" required placeholder="كلمة المرور">
-    <button class="pinbtn" id="adminLoginBtn" type="submit">دخول لوحة التحكم</button>
+    <button class="pinbtn" id="adminLoginBtn" type="button" onclick="loginAdmin(event)">دخول لوحة التحكم</button>
     <div id="pinError" role="alert"></div>
   </form>
 </div>
