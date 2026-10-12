@@ -53,20 +53,12 @@ function loginForm(){return `<form class="auth-form" onsubmit="doLogin(event)">
  <p class="auth-switch">ليس لديك حساب؟ <button type="button" class="text-link strong" onclick="state.view='register';render()">إنشاء حساب جديد</button></p>
  </form>`}
 function registerForm(){return `<form class="auth-form register-form" onsubmit="doRegister(event)">
- <h3 class="form-section-title"><span>♙</span> البيانات الشخصية</h3>
- <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="full_name" required autocomplete="name" placeholder="الاسم الكامل"></label>
  <label class="auth-field"><span class="field-icon">✉</span><input class="input" id="email" type="email" required autocomplete="email" placeholder="البريد الإلكتروني"></label>
- <label class="auth-field"><span class="field-icon">☎</span><input class="input" id="phone" type="tel" autocomplete="tel" placeholder="رقم الهاتف"></label>
- <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="password" type="password" minlength="6" required autocomplete="new-password" placeholder="كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
- <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="confirm_password" type="password" minlength="6" required autocomplete="new-password" placeholder="تأكيد كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('confirm_password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
- <h3 class="form-section-title"><span>◆</span> معلومات الدراسة</h3>
- <label class="auth-field select-field"><span class="field-icon">▤</span><select class="select" id="country_id" onchange="loadUniversities(this.value)" required><option value="">اختر الدولة</option></select></label>
- <label class="auth-field select-field"><span class="field-icon">⌂</span><select class="select" id="university_id" onchange="loadStages(this.value)" required><option value="">اختر الجامعة</option></select></label>
- <label class="auth-field select-field"><span class="field-icon">▥</span><select class="select" id="stage_id" required><option value="">اختر المرحلة الدراسية</option></select></label>
+ <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="password" type="password" minlength="8" required autocomplete="new-password" placeholder="كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
+ <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="confirm_password" type="password" minlength="8" required autocomplete="new-password" placeholder="تأكيد كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('confirm_password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
+ <p class="muted">بعد إنشاء الحساب، استكشف الكورسات أولًا واستكمل بياناتك الدراسية عند طلب الاشتراك فقط.</p>
  <label class="terms-option"><input type="checkbox" id="terms_accept" required><span>أوافق على الشروط والأحكام وسياسة الخصوصية</span></label>
  <button class="btn primary btn-wide auth-submit">إنشاء الحساب <span aria-hidden="true">♙+</span></button>
- <div class="auth-divider"><span>أو</span></div>
- <div class="oauth-row"><button type="button" class="oauth-btn" onclick="startOAuth('google')"><span class="google-mark">G</span> التسجيل باستخدام Google</button><button type="button" class="oauth-btn" onclick="startOAuth('apple')"><span class="apple-mark">●</span> التسجيل باستخدام Apple</button></div>
  <p class="auth-switch">لديك حساب بالفعل؟ <button type="button" class="text-link strong" onclick="state.view='login';render()">تسجيل الدخول</button></p>
  </form>`}
 function togglePassword(id,button){const el=document.getElementById(id);if(!el)return;el.type=el.type==='password'?'text':'password';button.textContent=el.type==='password'?'◉':'◎'}
@@ -76,7 +68,25 @@ async function loadRegisterOptions(){try{const cs=await api('countries?select=id
 async function loadUniversities(id){const el=document.querySelector('#university_id'),st=document.querySelector('#stage_id');el.innerHTML='<option>جاري التحميل...</option>';st.innerHTML='<option value="">اختر المرحلة</option>';if(!id)return;try{const x=await api(`universities?select=id,name&country_id=eq.${encodeURIComponent(id)}&active=eq.true&order=name.asc`);el.innerHTML='<option value="">اختر الجامعة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){toast('تعذر تحميل الجامعات','err')}}
 async function loadStages(id){const el=document.querySelector('#stage_id');el.innerHTML='<option value="">اختر المرحلة</option>';if(!id)return;try{const x=await api(`stages?select=id,name&university_id=eq.${encodeURIComponent(id)}&active=eq.true&order=name.asc`);el.innerHTML='<option value="">اختر المرحلة</option>'+x.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}catch(e){toast('تعذر تحميل المراحل','err')}}
 async function doLogin(e){e.preventDefault();try{const j=await auth('token?grant_type=password',{email:email.value.trim(),password:password.value});saveSession(j);await chooseRole()}catch(x){const m=String(x?.message||'');if(/email not confirmed/i.test(m))toast('حسابك اتعمل لكن البريد محتاج تفعيل مرة واحدة. استخدم رابط إعادة إرسال التفعيل أو راجع إعدادات التسجيل لتسهيل الدخول.','err');else if(/invalid login credentials/i.test(m))toast('البريد أو كلمة المرور غير صحيحة. لو سجلت حالًا، تأكد أن الحساب مفعّل.','err');else toast(m,'err')}}
-async function doRegister(e){e.preventDefault();if(password.value!==document.getElementById('confirm_password')?.value){toast('كلمتا المرور غير متطابقتين','err');return}try{const body={email:email.value.trim(),password:password.value,data:{full_name:full_name.value.trim(),phone:phone.value.trim(),country_id:country_id.value,university_id:university_id.value,stage_id:stage_id.value}};const j=await auth('signup',body);const user=j.user||(j.id?j:null);const authSession=j.session||j;if(authSession?.access_token&&user){saveSession({...authSession,user});toast('تم إنشاء الحساب بنجاح','ok');await chooseRole()}else{state.view='login';render();toast('تم إنشاء الحساب. لو طلب النظام تأكيد البريد، افتح رابط التأكيد مرة واحدة فقط.','ok')}}catch(x){const m=String(x?.message||'');if(/email rate limit exceeded|rate limit/i.test(m))toast('انتظر قليلًا قبل إعادة المحاولة، أو سجّل الدخول إذا كان الحساب قد أُنشئ بالفعل.','err');else toast(m,'err')}}
+async function doRegister(e){
+ e.preventDefault();
+ const emailInput=document.getElementById('email'),passwordInput=document.getElementById('password'),confirmInput=document.getElementById('confirm_password');
+ const emailValue=String(emailInput?.value||'').trim().toLowerCase(),passwordValue=String(passwordInput?.value||'');
+ if(passwordValue!==String(confirmInput?.value||'')){toast('كلمتا المرور غير متطابقتين','err');return}
+ if(passwordValue.length<8){toast('كلمة المرور لازم تكون 8 أحرف على الأقل','err');return}
+ const submit=e.submitter||e.target.querySelector('.auth-submit');if(submit)submit.disabled=true;
+ try{
+  const j=await auth('signup',{email:emailValue,password:passwordValue});
+  const user=j.user||(j.id?j:null),authSession=j.session||j;
+  if(authSession?.access_token&&user){saveSession({...authSession,user});toast('تم إنشاء الحساب بنجاح','ok');await chooseRole()}
+  else{state.view='login';render();toast('تم إنشاء الحساب. افتح رسالة التأكيد على بريدك الإلكتروني، ثم سجّل الدخول.','ok')}
+ }catch(x){
+  const m=String(x?.message||'');
+  if(/email rate limit exceeded|rate limit/i.test(m))toast('وصلنا لحد إرسال الرسائل مؤقتًا. انتظر قليلًا ثم حاول مرة أخرى.','err');
+  else if(/already registered|user already registered/i.test(m))toast('البريد مسجل بالفعل. سجّل الدخول أو استخدم «نسيت كلمة المرور».','err');
+  else toast(m,'err');
+ }finally{if(submit)submit.disabled=false}
+}
 async function chooseRole(){
   state.role='student';
   state.view='home';
@@ -131,7 +141,7 @@ async function render(){
   const root=document.querySelector('#app');
   if(!session){
     root.innerHTML=authView(state.view==='register'?'register':'login');
-    if(state.view==='register') loadRegisterOptions();
+    
     return;
   }
   const requestedView=state.view, requestedRole=state.role, requestedId=state.data.id;
@@ -316,10 +326,10 @@ async function lecturePage(id){
 
 async function redesignedStudentHome(){
  const b=siteSettings.brand||{};let name='طالبنا',courses=[],lecturers=[],publicCourses=[],freeLectures=[],recent=[];
- try{const me=await api('students?select=id,full_name&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&limit=1');if(me.length){name=(me[0].full_name||name).trim().split(/\s+/)[0];const subs=await api('student_courses?select=course_id,active,expires_at&student_id=eq.'+me[0].id);const now=Date.now();const ids=[...new Set(subs.filter(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now)).map(s=>s.course_id).filter(Boolean))];if(ids.length){courses=await api('courses?select=id,name,code,image_url,lecturer_id&active=eq.true&id=in.('+ids.join(',')+')&order=name.asc');recent=await api('lectures?select=id,title,course_id,created_at&course_id=in.('+ids.join(',')+')&active=eq.true&order=created_at.desc&limit=3')}}}catch(e){console.warn(e)}
+ try{const me=await api('students?select=id,full_name&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&limit=1');if(me.length){name=(me[0].full_name||name).trim().split(/\s+/)[0];const subs=await api('student_courses?select=course_id,active,expires_at&student_id=eq.'+me[0].id);const now=Date.now();const ids=[...new Set(subs.filter(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now)).map(s=>s.course_id).filter(Boolean))];if(ids.length){courses=await api('courses?select=id,name,code,image_url,lecturer_id,is_public&active=eq.true&id=in.('+ids.join(',')+')&order=name.asc');recent=await api('lectures?select=id,title,course_id,created_at&course_id=in.('+ids.join(',')+')&active=eq.true&order=created_at.desc&limit=3')}}}catch(e){console.warn(e)}
  try{lecturers=await api('lecturer_public_profiles?select=id,full_name,bio,image_url&order=full_name.asc')}catch(e){console.warn(e)}
- try{publicCourses=await api('courses?select=id,name,code,image_url,lecturer_id&active=eq.true&is_public=eq.true&order=name.asc&limit=8')}catch(e){}
- try{const ids=[...new Set(publicCourses.map(c=>c.id).filter(Boolean))];if(ids.length)freeLectures=await api('lectures?select=id,title,description,course_id,created_at&course_id=in.('+ids.join(',')+')&active=eq.true&is_public=eq.true&order=created_at.desc&limit=6')}catch(e){}
+ try{publicCourses=await api('courses?select=id,name,code,image_url,lecturer_id,is_public,stage_id&active=eq.true&order=name.asc&limit=12')}catch(e){}
+ try{const ids=[...new Set(publicCourses.filter(c=>c.is_public).map(c=>c.id).filter(Boolean))];if(ids.length)freeLectures=await api('lectures?select=id,title,description,course_id,created_at&course_id=in.('+ids.join(',')+')&active=eq.true&is_public=eq.true&order=created_at.desc&limit=6')}catch(e){}
  const logo=b.logo_url?'<img src="'+esc(b.logo_url)+'" alt="شعار Future Center">':'<img src="./icons/future-center-original-256.jpg?v=8" alt="شعار Future Center">';
  const lecturerHtml=lecturers.length?lecturers.map(x=>'<button class="instructor-card" type="button" onclick="go(\'lecturer\',\''+esc(x.id)+'\')"><span class="instructor-photo">'+(x.image_url?'<img loading="lazy" src="'+esc(x.image_url)+'" alt="'+esc(x.full_name)+'">':'<span class="instructor-placeholder">♙</span>')+'</span><span class="instructor-info"><b>'+esc(x.full_name)+'</b><small>'+esc((x.bio||'محاضر في Future Center').slice(0,75))+'</small><em>عرض الصفحة ←</em></span></button>').join(''):'<div class="empty-state"><span class="empty-symbol">♙</span><div><h3>صفحات المحاضرين قيد التجهيز</h3><p>ستظهر هنا بيانات المحاضرين وصورهم بعد إضافتها وتفعيلها من الإدارة.</p></div></div>';
  const courseCards=(list,emptyText,buttonText)=>list.length?'<div class="real-course-grid">'+list.slice(0,4).map(c=>'<article class="real-course-card" data-course-search="'+esc((c.name||'')+' '+(c.code||''))+'"><div class="real-course-cover">'+(c.image_url?'<img loading="lazy" src="'+esc(c.image_url)+'" alt="">':'<span>📚</span>')+'</div><div class="real-course-info"><h3>'+esc(c.name)+'</h3><p>'+esc(c.code||'كورس')+'</p><button class="btn primary" onclick="go(\'course\',\''+esc(c.id)+'\')">'+buttonText+' ←</button></div></article>').join('')+'</div>':'<div class="empty-state"><span class="empty-symbol">📚</span><div><h3>'+emptyText+'</h3><p>سيظهر المحتوى الفعلي هنا عند نشره من إدارة السنتر.</p><button class="btn secondary" onclick="go(\'catalog\')">تصفح الكورسات</button></div></div>';
