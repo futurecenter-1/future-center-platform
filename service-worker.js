@@ -1,5 +1,5 @@
-const CACHE_NAME = 'future-center-shell-v14';
-const APP_SHELL = ['./', './index.html', './styles.css', './styles.css?v=stable-mobile-nav-20261013c', './styles.css?v=stable-mobile-nav-20261013c', './config.js', './app.js', './app.js?v=stable-mobile-nav-20261013c', './manifest.json', './icons/fc-icon.svg', './icons/future-center-original-256.jpg', './icons/future-center-180.png', './icons/future-center-192.png', './icons/future-center-512.png'];
+const CACHE_NAME = 'future-center-shell-v15';
+const APP_SHELL = ['./', './index.html', './styles.css', './styles.css?v=student-polish-20261013a', './styles.css?v=student-polish-20261013a', './config.js', './app.js', './app.js?v=student-polish-20261013a', './manifest.json', './icons/fc-icon.svg', './icons/future-center-original-256.jpg', './icons/future-center-180.png', './icons/future-center-192.png', './icons/future-center-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });
