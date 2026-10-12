@@ -22,7 +22,7 @@ async function restoreSession(){
   session=saved;return true;
 }
 function logo(){const b=siteSettings.brand||{};return `<div class="brand-mini">${b.logo_url?`<img src="${esc(b.logo_url)}" alt="" style="width:46px;height:46px;object-fit:contain;border-radius:13px">`:'<img class="brand-logo" src="./icons/future-center-192.png?v=8" alt="Future Center" width="46" height="46">'}<b>${esc(b.name||'Future Center')}</b></div>`}
-function layout(content,nav=''){return `<div class="shell ${state.role==='student'?'student-shell':''}"><header class="topbar card">${logo()}<nav class="nav">${nav}</nav><button class="btn secondary" onclick="logout()">خروج</button></header><main class="page">${content}</main></div>`}
+function layout(content,nav=''){return `<div class="shell ${state.role==='student'?'student-shell':''}"><header class="topbar card">${logo()}<nav class="nav desktop-nav">${nav}</nav><button class="btn secondary" onclick="logout()">خروج</button></header><main class="page">${content}</main><nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">${nav}</nav></div>`}
 function authView(mode='login'){
  const b=siteSettings.brand||{},isRegister=mode==='register';
  return `<div class="auth-page ${isRegister?'register-page':'login-page'}">
