@@ -167,13 +167,30 @@ async function verifyAdmin(session){
   if(!session?.access_token||!session?.user?.id) return false;
   const previous=adminSession;
   adminSession=session;
-  try{
-    const roles=await api("user_roles",{query:"?select=role&user_id=eq."+encodeURIComponent(session.user.id)+"&role=eq.admin&limit=1"});
-    return Array.isArray(roles)&&roles.some(x=>x.role==="admin");
-  }catch(error){
-    adminSession=previous;
-    throw new Error("تم تسجيل الدخول، لكن تعذّر التحقق من صلاحية المدير: "+(error.message||"خطأ اتصال"));
+  let lastError=null;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const response=await fetch(SUPABASE_URL+"/rest/v1/user_roles?select=role&user_id=eq."+encodeURIComponent(session.user.id)+"&role=eq.admin&limit=1",{
+        headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+session.access_token,"Accept":"application/json"}
+      });
+      const body=await response.text();
+      if(response.ok){
+        let roles=[];try{roles=JSON.parse(body)}catch{}
+        return Array.isArray(roles)&&roles.some(x=>x.role==="admin");
+      }
+      if(response.status===401||response.status===503){
+        lastError=new Error("تعذر التحقق مؤقتًا ("+response.status+").");
+        if(attempt<2){await new Promise(resolve=>setTimeout(resolve,700*(attempt+1)));continue}
+      }else{
+        throw new Error("فشل التحقق من صلاحية المدير ("+response.status+").");
+      }
+    }catch(error){
+      lastError=error;
+      if(attempt<2){await new Promise(resolve=>setTimeout(resolve,700*(attempt+1)));continue}
+    }
   }
+  adminSession=previous;
+  throw lastError||new Error("تعذر التحقق من صلاحية المدير.");
 }
 async function loginAdmin(event){
   event?.preventDefault();
