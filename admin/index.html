@@ -162,12 +162,18 @@ let adminSession=null;
 const H={"apikey":SUPABASE_KEY,get Authorization(){return "Bearer "+(adminSession?.access_token||SUPABASE_KEY)},"Content-Type":"application/json","Prefer":"return=representation"};
 const state={section:"overview",cache:{}};
 
-function showLoginError(message){const el=document.getElementById("pinError");if(el)el.textContent=message}
+function showLoginError(message){const el=document.getElementById("pinError");if(el)el.textContent=message;const lock=document.getElementById("pinLock");if(lock)lock.style.display="flex"}
 async function verifyAdmin(session){
   if(!session?.access_token||!session?.user?.id) return false;
+  const previous=adminSession;
   adminSession=session;
-  const roles=await api("user_roles",{query:"?select=role&user_id=eq."+encodeURIComponent(session.user.id)+"&role=eq.admin&limit=1"});
-  return Array.isArray(roles)&&roles.some(x=>x.role==="admin");
+  try{
+    const roles=await api("user_roles",{query:"?select=role&user_id=eq."+encodeURIComponent(session.user.id)+"&role=eq.admin&limit=1"});
+    return Array.isArray(roles)&&roles.some(x=>x.role==="admin");
+  }catch(error){
+    adminSession=previous;
+    throw new Error("تم تسجيل الدخول، لكن تعذّر التحقق من صلاحية المدير: "+(error.message||"خطأ اتصال"));
+  }
 }
 async function loginAdmin(event){
   event?.preventDefault();
@@ -175,15 +181,33 @@ async function loginAdmin(event){
   if(btn){btn.disabled=true;btn.textContent="جاري التحقق..."}
   showLoginError("");
   try{
-    const response=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email:document.getElementById("adminEmail").value.trim(),password:document.getElementById("adminPassword").value})});
-    const session=await response.json();
-    if(!response.ok) throw new Error(session.msg||session.message||session.error_description||"بيانات الدخول غير صحيحة");
-    if(!await verifyAdmin(session)){adminSession=null;throw new Error("الحساب ده مش مضاف كمدير للمنصة.");}
-    adminSession=session;sessionStorage.setItem("fc_admin_session",JSON.stringify(session));
+    const email=document.getElementById("adminEmail").value.trim();
+    const password=document.getElementById("adminPassword").value;
+    const response=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+    const session=await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(session.msg||session.message||session.error_description||session.error||"فشل تسجيل الدخول. راجع البريد وكلمة المرور.");
+    const priorSession=adminSession;
+    try{
+      if(!await verifyAdmin(session)) throw new Error("تم قبول بيانات الدخول لكن الحساب غير مسجل كمدير.");
+    }catch(error){
+      adminSession=priorSession;
+      try{await fetch(SUPABASE_URL+"/auth/v1/logout",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+session.access_token}})}catch{}
+      throw error;
+    }
+    adminSession=session;
+    sessionStorage.setItem("fc_admin_session",JSON.stringify(session));
     document.getElementById("pinLock").style.display="none";
-    await startAdmin();
-  }catch(error){showLoginError(error.message||"تعذر تسجيل الدخول")}
-  finally{if(btn){btn.disabled=false;btn.textContent="دخول لوحة التحكم"}}
+    try{
+      await startAdmin();
+    }catch(error){
+      document.getElementById("pinLock").style.display="flex";
+      throw new Error("تم تسجيل الدخول، لكن تحميل لوحة التحكم فشل: "+(error.message||"خطأ غير معروف"));
+    }
+  }catch(error){
+    showLoginError(error.message||"تعذر تسجيل الدخول");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="دخول لوحة التحكم"}
+  }
 }
 async function logoutAdmin(){
   try{if(adminSession?.access_token) await fetch(SUPABASE_URL+"/auth/v1/logout",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+adminSession.access_token}})}catch{}
