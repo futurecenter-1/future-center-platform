@@ -67,13 +67,18 @@ button{cursor:pointer}
 
 /* Mobile dashboard hierarchy: compact stats, premium navigation, readable records */
 @media(max-width:700px){
-  /* One compact horizontal stats strip */
-  .stats{display:flex;flex-wrap:nowrap;gap:6px;margin-top:8px;overflow-x:auto;overflow-y:hidden;padding:2px 1px 7px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  .stats::-webkit-scrollbar{display:none}
-  .stat{flex:0 0 84px;min-width:84px;min-height:0;padding:8px 4px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;box-shadow:0 5px 14px rgba(0,0,0,.16)}
-  .stat .staticon{width:25px;height:25px;border-radius:8px;font-size:13px}
-  .stat .label{margin:0;font-size:9px;line-height:1.35;white-space:nowrap}
-  .stat .num{margin:0;font-size:17px;line-height:1.1}
+  /* Four overview metrics fill the mobile width evenly */
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px;overflow:visible;padding:2px 0 7px;width:100%}
+  .stat{min-width:0;min-height:91px;padding:9px 3px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.2);animation:statRise .55s both}
+  .stat:nth-child(2){animation-delay:.07s}.stat:nth-child(3){animation-delay:.14s}.stat:nth-child(4){animation-delay:.21s}
+  .stat:after{content:"";position:absolute;inset:-45% auto -45% -65%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);transform:rotate(20deg);animation:statShine 5s ease-in-out infinite;pointer-events:none}
+  .stat .staticon{width:29px;height:29px;border-radius:9px;font-size:15px;animation:iconFloat 3.2s ease-in-out infinite}
+  .stat .label{margin:0;font-size:clamp(9px,2.7vw,11px);line-height:1.35;white-space:normal}
+  .stat .num{margin:0;font-size:clamp(16px,4.6vw,21px);line-height:1.1;font-variant-numeric:tabular-nums}
+  @keyframes statRise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes statShine{0%,70%,100%{left:-65%}35%{left:130%}}
+  @keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @media(prefers-reduced-motion:reduce){.stat,.stat:after,.stat .staticon{animation:none!important}}
   /* Primary section buttons: larger, clearer touch targets */
   .tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px;padding:0;overflow:visible;width:100%;max-width:100%}
   .tabs button{width:100%;min-width:0;min-height:66px;white-space:normal;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px 6px;border-radius:15px;font-size:14px;line-height:1.45;font-weight:850;background:linear-gradient(145deg,#173e70,#0d2a50);border:1px solid rgba(113,166,224,.42);box-shadow:0 7px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .18s,border-color .18s,background .18s}
