@@ -1,4 +1,4 @@
-const C=window.FC_CONFIG||{};const API=(C.supabaseUrl||'').replace(/\/$/,'');const KEY=C.supabaseKey||'';let session=null,siteSettings={},state={role:null,view:'home',data:{}};
+const C=window.FC_CONFIG||{};const API=(C.supabaseUrl||'').replace(/\/$/,'');const KEY=C.supabaseKey||'';let session=null,siteSettings={},state={role:null,view:'home',data:{}},renderSequence=0;
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 function toast(msg,type=''){const d=document.createElement('div');d.className='toast '+type;d.textContent=msg;document.querySelector('#toast').appendChild(d);setTimeout(()=>d.remove(),3000)}
 async function api(path,opts={}){const h={'apikey':KEY,'Authorization':`Bearer ${session?.access_token||KEY}`,'Content-Type':'application/json',...(opts.headers||{})};const r=await fetch(API+'/rest/v1/'+path,{...opts,headers:h});if(!r.ok){let t=await r.text();throw Error(t||r.statusText)}return r.status===204?null:r.json()}
@@ -125,19 +125,32 @@ function navFor(role){
   if(role==='lecturer') return `<button class="${state.view==='home'?'active':''}" onclick="go('home')">لوحتي</button><button class="${state.view==='mycourses'?'active':''}" onclick="go('mycourses')">كورساتي</button><button class="${state.view==='profile'?'active':''}" onclick="go('profile')">حسابي</button>`;
   return `<button class="active">لوحة الإدارة</button>`;
 }
-function go(v,id){state.view=v;if(id)state.data.id=id;render()}
+function go(v,id){state.view=v;if(id!==undefined)state.data.id=id;render();}
 async function render(){
+  const requestId=++renderSequence;
+  const root=document.querySelector('#app');
   if(!session){
-    document.querySelector('#app').innerHTML=authView(state.view==='register'?'register':'login');
+    root.innerHTML=authView(state.view==='register'?'register':'login');
     if(state.view==='register') loadRegisterOptions();
     return;
   }
+  const requestedView=state.view, requestedRole=state.role, requestedId=state.data.id;
   let html='';
-  if(state.role==='student') html=await studentPage();
-  else if(state.role==='lecturer') { html=await lecturerPage(); if(state.view==='lecturerlecture' || state.view==='lecture') html=await lecturerLecturePage(state.data.id); }
-  else if(state.role==='admin') html=await adminPage();
-  else html=await studentPage();
-  document.querySelector('#app').innerHTML=layout(html,navFor(state.role));
+  try{
+    if(requestedRole==='student') html=await studentPage();
+    else if(requestedRole==='lecturer') {
+      html=await lecturerPage();
+      if(requestedView==='lecturerlecture' || requestedView==='lecture') html=await lecturerLecturePage(requestedId);
+    } else if(requestedRole==='admin') html=await adminPage();
+    else html=await studentPage();
+  }catch(error){
+    console.error('Future Center render failed',error);
+    html='<section class="hero card"><h2>حصلت مشكلة في تحميل الصفحة</h2><p class="muted">راجع اتصال الإنترنت وحاول مرة أخرى.</p><button class="btn primary" onclick="render()">إعادة المحاولة</button></section>';
+  }
+  // Ignore slower requests from the page the user already left.
+  if(requestId!==renderSequence || requestedView!==state.view || requestedRole!==state.role || requestedId!==state.data.id) return;
+  root.innerHTML=layout(html,navFor(state.role));
+  root.dataset.view=state.view;
 }
 async function studentPage(){
  if(state.view==='home'){
