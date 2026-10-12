@@ -1,1 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#163a61"/><stop offset="1" stop-color="#040b14"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1d68d"/><stop offset="1" stop-color="#b88932"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#bg)"/><rect x="34" y="34" width="444" height="444" rx="88" fill="none" stroke="url(#gold)" stroke-width="8" opacity=".85"/><path d="M135 356V156h153v39H180v43h92v38h-92v80z" fill="url(#gold)"/><path d="M369 205c-15-12-31-17-49-17-35 0-57 24-57 68s22 68 57 68c18 0 34-5 49-17v43c-16 11-33 16-53 16-61 0-99-43-99-110s38-110 99-110c20 0 37 5 53 16z" fill="#f7f9fc" transform="translate(8 0)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102d4b"/><stop offset=".55" stop-color="#06172b"/><stop offset="1" stop-color="#020812"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0b4"/><stop offset=".28" stop-color="#f5bd5c"/><stop offset=".58" stop-color="#a96522"/><stop offset=".78" stop-color="#ffe3a0"/><stop offset="1" stop-color="#b8752b"/></linearGradient><filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter></defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<circle cx="256" cy="256" r="228" fill="none" stroke="#e8ad52" stroke-width="12" opacity=".22" filter="url(#glow)"/>
+<circle cx="256" cy="256" r="228" fill="none" stroke="url(#gold)" stroke-width="8"/>
+<g fill="none" stroke="url(#gold)" stroke-linejoin="round" stroke-linecap="square">
+<path d="M151 143 L256 96 L361 143 L256 192 Z" stroke-width="15"/>
+<path d="M181 158 V247 Q256 291 331 247 V158" stroke-width="13"/>
+<path d="M210 171 V246 M256 189 V262 M302 171 V246" stroke-width="11"/>
+<path d="M361 145 V199" stroke-width="11"/><path d="M351 216 H371" stroke-width="12"/>
+</g>
+<text x="256" y="340" fill="url(#gold)" font-family="Georgia,serif" font-size="66" font-weight="bold" text-anchor="middle" letter-spacing="2">FUTURE</text>
+<text x="256" y="378" fill="#f4d29a" font-family="Arial,sans-serif" font-size="15" text-anchor="middle" letter-spacing="5">ACHIEVE YOUR DREAM</text>
+</svg>
