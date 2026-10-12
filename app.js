@@ -309,7 +309,82 @@ async function countLecturesForCourses(courses){
 
 async function count(table){try{const r=await api(`${table}?select=id`);return Array.isArray(r)?r.length:'—'}catch{return '—'}}
 async function coursesPage(mine){let rows=[];try{if(mine){const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);if(me.length){const subs=await api(`student_courses?select=course_id,active,expires_at&student_id=eq.${me[0].id}`);const now=Date.now();const ids=[...new Set(subs.filter(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now)).map(s=>s.course_id))];if(ids.length)rows=await api(`courses?select=id,name,code,is_public,active,stage_id,image_url&id=in.(${ids.join(',')})&active=eq.true&order=name.asc`)} }else rows=await api('courses?select=id,name,code,is_public,active,stage_id,image_url&active=eq.true&order=name.asc')}catch(e){toast('تعذر تحميل الكورسات','err')}return `<section class="hero card"><div class="row"><div><h2>${mine?'كورساتي':'كل الكورسات'}</h2><p class="muted">${mine?'المحتوى المشترك فيه فقط.':'تصفح المواد المتاحة على المنصة.'}</p></div></div></section><section class="grid">${rows.length?rows.map(c=>`<article class="course card"><div class="cover">${c.image_url?`<img src="${esc(c.image_url)}" alt="" style="width:100%;height:100%;object-fit:cover">`:'📚'}</div><div class="body"><span class="tag">${c.is_public?'متاح':'مشتركين فقط'}</span><h3>${esc(c.name)}</h3><p class="muted">إدارة محتوى الكورس ومحاضراته.</p><button class="btn primary" onclick="go('course','${c.id}')">فتح الكورس</button></div></article>`).join(''):`<div class="card empty" style="grid-column:1/-1">لا توجد كورسات لعرضها حالياً.</div>`}</section>`}
-async function coursePage(id){let c,l=[],subscribed=false;try{[c]=await api(`courses?select=*&id=eq.${encodeURIComponent(id)}&active=eq.true&limit=1`);if(!c)return `<section class="hero card"><h2>الكورس غير متاح</h2><button class="btn primary" onclick="go('catalog')">العودة للكورسات</button></section>`;if(c.is_public){subscribed=true}else{const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);if(me.length){const subs=await api(`student_courses?select=course_id,active,expires_at&student_id=eq.${me[0].id}&course_id=eq.${encodeURIComponent(id)}`);const now=Date.now();subscribed=subs.some(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now))}}if(subscribed)l=await api(`lectures?select=id,title,description,lecture_number,active,is_public&course_id=eq.${encodeURIComponent(id)}&active=eq.true&order=lecture_number.asc`)}catch(e){toast('تعذر تحميل تفاصيل الكورس','err')}return `<section class="hero card"><button class="link" onclick="go('catalog')">← رجوع لكل الكورسات</button><h2>${esc(c?.name||'الكورس')}</h2><p class="muted">${esc(c?.code ? 'كود الكورس: '+c.code : 'عرض محاضرات الكورس والمحتوى التعليمي.')}</p><span class="tag">${c?.is_public?'كورس مجاني':'كورس باشتراك'}</span></section>${!subscribed?`<section class="card panel"><h3>هذا الكورس متاح للمشتركين فقط</h3><p class="muted">تقدر تتصفح بيانات الكورس، لكن المحاضرات والملفات بتظهر بعد تفعيل اشتراكك من إدارة السنتر.</p><button class="btn secondary" onclick="go('catalog')">العودة لكل الكورسات</button></section>`:`<section class="card panel"><h3>المحاضرات</h3><div class="list">${l.length?l.map(x=>`<button class="item lecture ${x.is_public?'':'locked'}" onclick="go('lecture','${x.id}')"><div class="icon">${x.is_public?'▶':'🔒'}</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div></button>`).join(''):'<div class="empty">لا توجد محاضرات متاحة حالياً.</div>'}</div></section>`}`}
+async function coursePage(id){
+ let c=null,l=[],student=null,subscribed=false,latestRequest=null;
+ try{
+  const rows=await api('courses?select=id,name,code,is_public,active,stage_id,image_url&id=eq.'+encodeURIComponent(id)+'&active=eq.true&limit=1');c=rows[0];
+  if(!c)return '<section class="hero card"><h2>الكورس غير متاح</h2><button class="btn primary" onclick="go(\'catalog\')">العودة للكورسات</button></section>';
+  const me=await api('students?select=id,full_name,email,phone,country_id,university_id,stage_id&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&limit=1');student=me[0]||null;
+  subscribed=Boolean(c.is_public);
+  if(!subscribed&&student){
+   const subs=await api('student_courses?select=course_id,active,expires_at&student_id=eq.'+encodeURIComponent(student.id)+'&course_id=eq.'+encodeURIComponent(c.id));
+   const now=Date.now();subscribed=subs.some(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now));
+   if(!subscribed){const reqs=await api('course_enrollment_requests?select=id,status,created_at&student_id=eq.'+encodeURIComponent(student.id)+'&course_id=eq.'+encodeURIComponent(c.id)+'&order=created_at.desc&limit=1');latestRequest=reqs[0]||null}
+  }
+  if(subscribed)l=await api('lectures?select=id,title,description,lecture_number,active,is_public&course_id=eq.'+encodeURIComponent(c.id)+'&active=eq.true&order=lecture_number.asc');
+ }catch(e){console.warn('تعذر تحميل تفاصيل الكورس',e);return '<section class="hero card"><h2>تعذر تحميل الكورس</h2><p class="muted">راجع اتصال الإنترنت أو صلاحيات الحساب وحاول مرة أخرى.</p><button class="btn primary" onclick="render()">إعادة المحاولة</button></section>'}
+ let accessPanel='';
+ if(!subscribed){
+  if(latestRequest&&latestRequest.status==='pending')accessPanel='<section class="card panel"><h3>طلب الاشتراك قيد المراجعة</h3><p class="muted">وصل طلبك لإدارة السنتر. هتظهر المحاضرات بعد مراجعة بياناتك وتفعيل الاشتراك.</p></section>';
+  else accessPanel='<section class="card panel"><h3>ابدأ طلب الاشتراك</h3><p class="muted">استكشف الكورس أولًا. عند طلب الاشتراك هنراجع بياناتك الدراسية وشروط الكورس، ثم تراجع الإدارة الطلب قبل فتح المحاضرات.</p>'+(latestRequest&&latestRequest.status==='rejected'?'<p class="muted">الطلب السابق لم تتم الموافقة عليه؛ راجع بياناتك قبل إعادة الإرسال.</p>':'')+'<button class="btn primary" onclick="openCourseEnrollmentForm(\''+esc(c.id)+'\')">طلب الاشتراك ←</button></section>';
+ }
+ const lectureHtml=subscribed?'<section class="card panel"><h3>المحاضرات</h3><div class="list">'+(l.length?l.map(x=>'<button class="item lecture '+(x.is_public?'':'locked')+'" onclick="go(\'lecture\',\''+x.id+'\')"><div class="icon">'+(x.is_public?'▶':'🔒')+'</div><div class="item-main"><b>'+esc(x.title)+'</b><small>المحاضرة '+esc(x.lecture_number)+'</small></div></button>').join(''):'<div class="empty">لا توجد محاضرات متاحة حالياً.</div>')+'</div></section>':'';
+ return '<section class="hero card"><button class="link" onclick="go(\'catalog\')">← رجوع لكل الكورسات</button><h2>'+esc(c.name)+'</h2><p class="muted">'+esc(c.code?'كود الكورس: '+c.code:'استكشف تفاصيل الكورس والمحاضر والمحتوى المتاح.')+'</p><span class="tag">'+(c.is_public?'محاضرات مجانية متاحة':'اشتراك مطلوب للمحاضرات')+'</span></section>'+accessPanel+lectureHtml;
+}
+async function openCourseEnrollmentForm(courseId){
+ try{
+  const cs=await api('courses?select=id,name,is_public,active,stage_id&id=eq.'+encodeURIComponent(courseId)+'&active=eq.true&limit=1'),c=cs[0];
+  if(!c){toast('الكورس غير متاح حاليًا','err');return}
+  if(c.is_public){toast('الكورس متاح للمشاهدة؛ افتحه من صفحة الكورس.','ok');return}
+  const students=await api('students?select=id,full_name,email,phone,country_id,university_id,stage_id&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&limit=1'),me=students[0];
+  if(!me){toast('تعذر تجهيز ملف الطالب. سجّل الخروج وادخل مرة أخرى.','err');return}
+  const ss=await api('stages?select=id,name,university_id&active=eq.true&id=eq.'+encodeURIComponent(c.stage_id)+'&limit=1'),requiredStage=ss[0];
+  if(!requiredStage){toast('شروط المرحلة لهذا الكورس غير مكتملة في قاعدة البيانات. تواصل مع الإدارة.','err');return}
+  const us=await api('universities?select=id,name,country_id&active=eq.true&id=eq.'+encodeURIComponent(requiredStage.university_id)+'&limit=1'),requiredUniversity=us[0];
+  if(!requiredUniversity){toast('بيانات جامعة الكورس غير مكتملة. تواصل مع الإدارة.','err');return}
+  const countries=await api('countries?select=id,name&active=eq.true&order=name.asc');
+  const universities=await api('universities?select=id,name,country_id&active=eq.true&order=name.asc');
+  const stages=await api('stages?select=id,name,university_id&active=eq.true&order=name.asc');
+  const countryOptions='<option value="">اختر الدولة</option>'+countries.map(x=>'<option value="'+esc(x.id)+'" '+(String(me.country_id||'')===String(x.id)?'selected':'')+'>'+esc(x.name)+'</option>').join('');
+  const universityOptions='<option value="">اختر الجامعة</option>'+universities.map(x=>'<option value="'+esc(x.id)+'" data-country="'+esc(x.country_id)+'" '+(String(me.university_id||'')===String(x.id)?'selected':'')+'>'+esc(x.name)+'</option>').join('');
+  const stageOptions='<option value="">اختر المرحلة الدراسية</option>'+stages.map(x=>'<option value="'+esc(x.id)+'" data-university="'+esc(x.university_id)+'" '+(String(me.stage_id||'')===String(x.id)?'selected':'')+'>'+esc(x.name)+'</option>').join('');
+  const form='<div class="modal" id="enrollment-modal"><div class="card"><div class="row"><h2>طلب اشتراك في '+esc(c.name)+'</h2><button type="button" class="btn secondary" onclick="closeEnrollmentForm()">×</button></div><p class="muted">الكورس مخصص لـ <b>'+esc(requiredUniversity.name)+'</b> — <b>'+esc(requiredStage.name)+'</b>. اكتب بياناتك الفعلية؛ الإدارة هتراجع الطلب قبل فتح المحاضرات.</p><form onsubmit="submitCourseEnrollment(event,\''+esc(c.id)+'\',\''+esc(me.id)+'\',\''+esc(requiredStage.id)+'\',\''+esc(requiredUniversity.id)+'\',\''+esc(requiredUniversity.country_id)+'\')"><div class="formgrid"><div class="field full"><label>الاسم بالكامل</label><input class="input" id="enroll_full_name" value="'+esc(me.full_name||'')+'" required></div><div class="field full"><label>البريد الإلكتروني</label><input class="input" value="'+esc(session.user.email||me.email||'')+'" disabled></div><div class="field full"><label>رقم الهاتف</label><input class="input" id="enroll_phone" value="'+esc(me.phone||'')+'" required></div><div class="field full"><label>الدولة</label><select class="select" id="enroll_country_id" onchange="filterEnrollmentUniversities(this.value)" required>'+countryOptions+'</select></div><div class="field full"><label>الجامعة</label><select class="select" id="enroll_university_id" onchange="filterEnrollmentStages(this.value)" required>'+universityOptions+'</select></div><div class="field full"><label>المرحلة الدراسية</label><select class="select" id="enroll_stage_id" required>'+stageOptions+'</select></div></div><button class="btn primary btn-wide" type="submit">إرسال طلب الاشتراك</button></form></div></div>';
+  document.body.insertAdjacentHTML('beforeend',form);
+  filterEnrollmentUniversities(me.country_id||'');filterEnrollmentStages(me.university_id||'');
+ }catch(e){console.error(e);toast('تعذر تجهيز نموذج الاشتراك: '+(e.message||''),'err')}
+}
+function filterEnrollmentUniversities(countryId){
+ const el=document.getElementById('enroll_university_id');if(!el)return;
+ for(const o of el.options){if(!o.value){o.hidden=false;continue}o.hidden=Boolean(countryId)&&o.dataset.country!==String(countryId)}
+ const selected=el.selectedOptions[0];if(selected&&selected.hidden)el.value='';
+ filterEnrollmentStages(el.value);
+}
+function filterEnrollmentStages(universityId){
+ const el=document.getElementById('enroll_stage_id');if(!el)return;
+ for(const o of el.options){if(!o.value){o.hidden=false;continue}o.hidden=Boolean(universityId)&&o.dataset.university!==String(universityId)}
+ const selected=el.selectedOptions[0];if(selected&&selected.hidden)el.value='';
+}
+function closeEnrollmentForm(){document.getElementById('enrollment-modal')?.remove()}
+async function submitCourseEnrollment(e,courseId,studentId,requiredStageId,requiredUniversityId,requiredCountryId){
+ e.preventDefault();
+ const fullName=String(document.getElementById('enroll_full_name')?.value||'').trim(),phone=String(document.getElementById('enroll_phone')?.value||'').trim();
+ const countryId=document.getElementById('enroll_country_id')?.value||'',universityId=document.getElementById('enroll_university_id')?.value||'',stageId=document.getElementById('enroll_stage_id')?.value||'';
+ if(!fullName||!phone||!countryId||!universityId||!stageId){toast('كمّل بياناتك المطلوبة قبل إرسال الطلب.','err');return}
+ const uniOption=document.getElementById('enroll_university_id')?.selectedOptions?.[0],stageOption=document.getElementById('enroll_stage_id')?.selectedOptions?.[0];
+ if(String(uniOption?.dataset.country||'')!==String(countryId)||String(stageOption?.dataset.university||'')!==String(universityId)){toast('اختار جامعة ومرحلة متوافقتين مع الدولة.','err');return}
+ if(String(stageId)!==String(requiredStageId)||String(universityId)!==String(requiredUniversityId)||String(countryId)!==String(requiredCountryId)){toast('الكورس مخصص لجامعة ومرحلة مختلفتين عن البيانات المختارة. راجع شروط الكورس قبل إرسال الطلب.','err');return}
+ const submit=e.submitter||e.target.querySelector('button[type="submit"]');if(submit)submit.disabled=true;
+ try{
+  await api('students?auth_user_id=eq.'+encodeURIComponent(session.user.id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({full_name:fullName,phone:phone,email:String(session.user.email||'').trim().toLowerCase(),country_id:countryId,university_id:Number(universityId),stage_id:Number(stageId)})});
+  await api('course_enrollment_requests',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({student_id:studentId,course_id:Number(courseId)})});
+  closeEnrollmentForm();toast('تم إرسال طلب الاشتراك للإدارة. هتظهر المحاضرات بعد الموافقة وتفعيل الاشتراك.','ok');await render();
+ }catch(err){
+  const message=String(err?.message||'');
+  if(/course_enrollment_requests_one_pending|duplicate key|23505/i.test(message))toast('عندك بالفعل طلب اشتراك قيد المراجعة للكورس ده.','err');
+  else if(/42501|row-level security|violates row-level/i.test(message))toast('البيانات غير مطابقة لشروط الكورس أو لا توجد صلاحية لإرسال الطلب.','err');
+  else toast('تعذر إرسال الطلب: '+message,'err');
+ }finally{if(submit)submit.disabled=false}
+}
 async function lecturePage(id){
   let l,files=[];
   try{
