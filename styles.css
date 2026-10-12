@@ -64,8 +64,8 @@
 
 /* Approved Future Center visual system: cinematic campus + glass + gold */
 :root{--navy:#06172a;--navy2:#0b2945;--gold:#f3b553;--gold2:#cf8b31;--white:#f7f5f0;--muted:#c1cad5;--line:rgba(255,255,255,.22);--glass:rgba(190,181,170,.20)}
-html,body{background:#06172a;color:#f7f5f0}
-body:before{content:"";position:fixed;inset:0;z-index:-2;background-image:linear-gradient(180deg,rgba(4,19,35,.62),rgba(4,17,31,.84) 58%,rgba(3,12,23,.97)),url("https://images.unsplash.com/photo-1656084656749-d6c6e3e222e5?auto=format&fit=crop&w=2200&q=85");background-size:cover;background-position:center top;background-attachment:fixed}
+html,body{background:transparent;color:#f7f5f0}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(180deg,rgba(4,19,35,.62),rgba(4,17,31,.84) 58%,rgba(3,12,23,.97)),url("https://images.unsplash.com/photo-1656084656749-d6c6e3e222e5?auto=format&fit=crop&w=2200&q=85");background-size:cover;background-position:center top;background-attachment:fixed}
 .auth-page{min-height:100svh;position:relative;isolation:isolate;overflow:hidden;padding:18px clamp(16px,4vw,48px) 30px;display:flex;flex-direction:column;align-items:center}
 .auth-backdrop{position:fixed;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(3,15,29,.87),rgba(4,20,37,.55) 56%,rgba(4,18,32,.38)),linear-gradient(180deg,rgba(2,15,28,.15),rgba(3,13,24,.8))}
 .auth-brandbar{width:min(100%,1000px);display:flex;justify-content:center;align-items:center;margin:4px auto 14px}
@@ -149,3 +149,5 @@ body:before{content:"";position:fixed;inset:0;z-index:-2;background-image:linear
  .recent-lecture{gap:9px;padding:10px 2px}.lecture-play{width:35px;height:35px;flex-basis:35px}.recent-lecture h3{font-size:12px}.recent-lecture p{font-size:10px}.recent-lecture .btn{font-size:9px;padding:7px 8px}
 }
 @media(max-width:380px){.oauth-row{grid-template-columns:1fr}.auth-logo strong{font-size:21px}.auth-card{padding:16px 12px}.student-hero h1{font-size:26px}.student-shell .brand-mini b{font-size:12px}}
+
+.auth-page,.student-shell{position:relative;z-index:1}
