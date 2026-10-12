@@ -13,7 +13,7 @@
   "theme_color": "#071426",
   "icons": [
     {
-      "src": "icons/fc-icon.svg?v=3",
+      "src": "icons/fc-icon.svg?v=4",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
