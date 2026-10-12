@@ -13,9 +13,15 @@
   "theme_color": "#071426",
   "icons": [
     {
-      "src": "icons/future-center-original-256.jpg?v=7",
-      "sizes": "256x256",
-      "type": "image/jpeg",
+      "src": "icons/future-center-192.png?v=8",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/future-center-512.png?v=8",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
