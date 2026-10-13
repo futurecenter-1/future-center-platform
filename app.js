@@ -37,7 +37,7 @@ function authView(mode='login'){
    <p>${isRegister?'ابدأ رحلتك التعليمية مع منصة فيوتشر':'سجّل الدخول إلى منصتك التعليمية مع فيوتشر'}</p>
   </section>
   <section class="auth-card card">
-   <div class="auth-card-title"><span class="auth-title-icon">${isRegister?'♙':'◆'}</span><div><h2>${isRegister?'إنشاء حساب جديد':'تسجيل الدخول'}</h2><p>${isRegister?'ابدأ رحلتك التعليمية':'أهلًا بك في منصة فيوتشر'}</p></div></div>
+   <div class="auth-card-title"><span class="auth-title-icon">${isRegister?'♙':'🎓'}</span><div><h2>${isRegister?'إنشاء حساب جديد':'تسجيل الدخول'}</h2><p>${isRegister?'ابدأ رحلتك التعليمية':'أهلًا بك في منصة فيوتشر'}</p></div></div>
    ${isRegister?registerForm():loginForm()}
   </section>
   <p class="auth-footer">FUTURE CENTER <span>•</span> منصتك التعليمية</p>
