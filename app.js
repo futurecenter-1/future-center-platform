@@ -48,8 +48,6 @@ function loginForm(){return `<form class="auth-form" onsubmit="doLogin(event)">
  <label class="auth-field"><span class="field-icon">♙</span><input class="input" id="password" type="password" required autocomplete="current-password" placeholder="كلمة المرور"><button type="button" class="password-toggle" onclick="togglePassword('password',this)" aria-label="إظهار كلمة المرور">◉</button></label>
  <div class="auth-options"><label class="remember-option"><input type="checkbox" checked> <span>تذكرني</span></label><button type="button" class="text-link" onclick="resetPassword()">نسيت كلمة المرور؟</button></div>
  <button class="btn primary btn-wide auth-submit">تسجيل الدخول <span aria-hidden="true">↪</span></button>
- <div class="auth-divider"><span>أو</span></div>
- <div class="oauth-row"><button type="button" class="oauth-btn" onclick="startOAuth('google')"><span class="google-mark">G</span> الدخول باستخدام Google</button><button type="button" class="oauth-btn" onclick="startOAuth('apple')"><span class="apple-mark">●</span> الدخول باستخدام Apple</button></div>
  <p class="auth-switch">ليس لديك حساب؟ <button type="button" class="text-link strong" onclick="state.view='register';render()">إنشاء حساب جديد</button></p>
  </form>`}
 function registerForm(){return `<form class="auth-form register-form" onsubmit="doRegister(event)">
