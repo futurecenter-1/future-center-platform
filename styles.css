@@ -492,3 +492,14 @@ body{min-height:100%;overscroll-behavior-y:contain}
 .auth-page.login-page .auth-logo strong{font-size:clamp(30px,8vw,40px);letter-spacing:clamp(4px,1.4vw,8px);color:#fff2cb;text-shadow:0 2px 0 #6b491b,0 4px 18px rgba(243,184,75,.38)}
 .auth-page.login-page .auth-logo span{font-size:clamp(13px,3.8vw,17px);letter-spacing:clamp(8px,2.7vw,13px);color:#ffd77c;margin-top:8px;text-shadow:0 0 18px rgba(243,184,75,.55)}
 @media(max-width:380px){.auth-page.login-page .auth-logo{min-height:190px}.auth-page.login-page .auth-logo img{width:108px;height:108px}.auth-page.login-page .auth-logo strong{font-size:29px}}
+
+/* Approved Future Center mobile screens: consistent bottom navigation and glass panels */
+.mobile-bottom-nav .nav-item{display:flex;flex:1;min-width:0;min-height:48px;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#9baac0;border-radius:12px;font-size:11px;font-weight:700;padding:5px 3px;}
+.mobile-bottom-nav .nav-item .nav-icon{font-size:22px;line-height:1.1;color:#a7b6c9;}
+.mobile-bottom-nav .nav-item.active{color:#22b8ff;background:linear-gradient(180deg,rgba(19,156,255,.13),rgba(19,156,255,.025));}
+.mobile-bottom-nav .nav-item.active .nav-icon{color:#18baff;text-shadow:0 0 16px rgba(24,186,255,.42);}
+.desktop-nav .nav-item{display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;border-radius:12px;padding:10px 12px;background:transparent;color:#b7c5d8;}
+.desktop-nav .nav-item.active{color:#28baff;background:rgba(24,186,255,.09);border-color:rgba(24,186,255,.15);}
+.shell>.topbar{background:rgba(5,18,32,.78);border-color:rgba(255,255,255,.09);}
+.shell .page{padding-bottom:calc(22px + env(safe-area-inset-bottom));}
+@media(max-width:800px){.shell{padding-left:12px!important;padding-right:12px!important}.shell>.topbar{padding:9px 11px;margin-bottom:12px;border-radius:17px}.shell>.mobile-bottom-nav{min-height:68px!important}.mobile-bottom-nav .nav-item{font-size:10px}.mobile-bottom-nav .nav-item .nav-icon{font-size:23px}.student-shell .student-hero{padding:20px 17px;min-height:160px;border-radius:21px}.student-shell .glass-panel{border-radius:18px}.shell .page{padding-bottom:calc(34px + env(safe-area-inset-bottom))}}
