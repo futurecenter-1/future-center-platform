@@ -15,7 +15,7 @@ for (const file of required) {
 for (const file of ["app.js", "config.js", "service-worker.js"]) {
   if (!fs.existsSync(file)) continue;
   try { new vm.Script(fs.readFileSync(file, "utf8"), { filename: file }); }
-  catch (e) { failures.push(`JavaScript syntax error in ${file}: ${e.message}`); }
+  catch (e) { failures.push(`JavaScript syntax error in ${file}: ${e.stack || e.message}`); }
 }
 for (const file of required.filter(x => x.endsWith(".html"))) {
   if (!fs.existsSync(file)) continue;
