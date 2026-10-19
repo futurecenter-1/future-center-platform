@@ -313,9 +313,11 @@ async function lecturerLecturePage(id){
 function renderVideoResource(f){
   const raw=String(f.resolved_url||f.file_url||f.url||f.external_url||'');
   const m=raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-  if(m) return `<div style="position:relative;padding-top:56.25%;overflow:hidden;border-radius:16px"><iframe src="https://www.youtube-nocookie.com/embed/${m[1]}" title="${esc(f.title||'فيديو المحاضرة')}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
-  if(/\.(mp4|webm|ogg)(\?|$)/i.test(raw)) return `<video controls playsinline style="width:100%;border-radius:16px" src="${esc(raw)}"></video>`;
-  return `<a class="btn secondary" href="${esc(raw)}" target="_blank" rel="noopener">▶ فتح الفيديو</a>`;
+  // Embed without exposing a clickable YouTube URL in the page. YouTube still controls
+  // its own player UI, so this reduces visible sharing/navigation rather than preventing extraction.
+  if(m) return `<div class="fc-video-embed" style="position:relative;padding-top:56.25%;overflow:hidden;border-radius:16px;background:#000"><iframe src="https://www.youtube-nocookie.com/embed/${m[1]}?controls=1&rel=0&playsinline=1&iv_load_policy=3" title="${esc(f.title||'فيديو المحاضرة')}" style="position:absolute;inset:0;width:100%;height:100%;border:0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+  if(/\.(mp4|webm|ogg)(\?|$)/i.test(raw)) return `<video controls playsinline controlsList="nodownload noplaybackrate" disablePictureInPicture style="width:100%;border-radius:16px" src="${esc(raw)}"></video>`;
+  return `<span class="muted">تعذر عرض الفيديو بهذا الرابط.</span>`;
 }
 function openLectureResourceForm(lectureId,kind){
  document.querySelector('#resourceModal')?.remove();
