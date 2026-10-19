@@ -702,3 +702,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  .auth-page.login-page .auth-switch,.auth-page.register-page .auth-switch{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* Standalone registration route shares the same app shell and original brand mark. */
+.auth:not(.auth-page){min-height:100svh;padding:calc(20px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(ellipse at 80% 8%,rgba(55,132,198,.22),transparent 35%),radial-gradient(ellipse at 8% 88%,rgba(142,101,42,.14),transparent 32%),linear-gradient(145deg,#091b30,#040a13 72%)}
+.auth:not(.auth-page) .auth-card{width:min(100%,520px);border-radius:27px!important;padding:clamp(20px,5vw,34px);background:linear-gradient(145deg,rgba(22,43,66,.82),rgba(8,20,34,.8))!important;border:1px solid rgba(195,220,248,.2)!important}
+.auth:not(.auth-page) .brand-mark{display:block;object-fit:contain;padding:5px;background:rgba(255,255,255,.04);border:1px solid rgba(232,189,104,.3);box-shadow:0 0 24px rgba(232,189,104,.12)}
+.auth:not(.auth-page) .brand h1{font-size:25px;letter-spacing:.2px}
+.auth:not(.auth-page) .brand p{line-height:1.7}
+.auth:not(.auth-page) .link{color:#f2d18b}
+.auth:not(.auth-page) .terms-option{color:#b6c7dc}
