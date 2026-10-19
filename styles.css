@@ -766,3 +766,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .fc-lecturer-lectures .item.lecture{border:1px solid #8db9e723!important;border-radius:15px!important;margin:8px 0;background:#ffffff06!important;padding:13px!important}
 .fc-lecturer-lectures .item.lecture .icon{background:#e8bb6020;color:#f3cb7c;border-radius:12px;padding:10px}
 @media(max-width:560px){.fc-lecturer-hero,.fc-lecturer-subhero{padding:18px!important;border-radius:21px!important}.fc-lecturer-hero h2,.fc-lecturer-subhero h2{font-size:24px!important}.fc-lecturer-actions{padding:14px!important;border-radius:19px!important}.fc-lecturer-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}.fc-lecturer-action{min-height:122px!important;padding:9px 7px!important;border-radius:14px!important}.fc-lecturer-action>span{width:32px!important;height:32px!important;font-size:20px!important}.fc-lecturer-action b{font-size:11px!important}.fc-lecturer-action small{font-size:9px!important}.fc-lecturer-stat{padding:12px!important}.fc-lecturer-stat .num{font-size:28px!important}}
+
+/* PDFs nested directly under each lecture in the course view */
+.fc-course-lectures{padding:18px!important;border:1px solid #8db9e72b!important;border-radius:22px!important;background:linear-gradient(145deg,#0d2237ed,#06111ff5)!important}
+.fc-course-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.fc-course-section-heading h3{margin:0}
+.fc-course-count{font-size:11px;color:#f1c76f;background:#f1c76f16;border:1px solid #f1c76f35;border-radius:999px;padding:6px 10px;white-space:nowrap}
+.fc-course-lecture-list{display:flex;flex-direction:column;gap:12px}
+.fc-course-lecture{padding:10px;border:1px solid #8db9e724;border-radius:17px;background:#ffffff05}
+.fc-course-lecture>.item.lecture{margin:0;padding:10px 8px;border:0;background:transparent;display:flex;align-items:center;gap:10px}
+.fc-lecture-open{font-size:10px;color:#8dc8ff;white-space:nowrap}
+.fc-lecture-pdfs{margin:7px 0 0 0;padding-top:9px;border-top:1px solid #8db9e71f;display:flex;flex-direction:column;gap:8px}
+.fc-lecture-pdf{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #e8bf6b30;border-radius:13px;background:linear-gradient(110deg,#e8bf6b0c,#8db9e708)}
+.fc-pdf-icon{display:grid;place-items:center;min-width:40px;height:43px;border-radius:10px;background:#ff777719;border:1px solid #ff777735;color:#ff9696;font-size:10px;font-weight:900}
+.fc-pdf-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}.fc-pdf-info b{font-size:12px;color:#f5f7fb;overflow-wrap:anywhere}.fc-pdf-info small{font-size:10px;color:#9db2c8}
+.fc-pdf-view{white-space:nowrap;text-decoration:none!important;font-size:11px;font-weight:800;color:#102033!important;background:linear-gradient(115deg,#ffe0a0,#d8a748);border-radius:10px;padding:9px 10px}
+.fc-lecture-no-pdf{display:flex;align-items:center;gap:7px;padding:10px 4px 1px;color:#7f95aa;font-size:11px}
+@media(max-width:560px){.fc-course-lectures{padding:13px!important;border-radius:19px!important}.fc-course-lecture{padding:8px;border-radius:14px}.fc-lecture-open{font-size:9px}.fc-pdf-view{font-size:10px;padding:8px}.fc-pdf-info b{font-size:11px}.fc-pdf-icon{min-width:35px;height:39px}}
