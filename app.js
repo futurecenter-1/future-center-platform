@@ -218,13 +218,33 @@ async function lecturerPage(){
       const c=courses.find(x=>String(x.id)===String(state.data.id));
       if(!c) return `<section class="card empty">هذا الكورس غير متاح لحسابك.</section>`;
       const lectures=await api(`lectures?select=id,title,description,lecture_number,active,is_public,course_id&course_id=eq.${c.id}&order=lecture_number.asc`);
-      return `<section class="hero card"><button class="link" onclick="go('mycourses')">← رجوع</button><h2>${esc(c.name)}</h2><p class="muted">إدارة محاضرات الكورس.</p></section><section class="card panel"><h3>المحاضرات</h3><div class="list">${lectures.length?lectures.map(x=>`<button class="item lecture" onclick="go('lecturerlecture','${x.id}')" type="button"><div class="icon">🎥</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number)}</small></div><span class="tag">${x.active?'نشطة':'موقوفة'}</span></button>`).join(''):'<div class="empty">لا توجد محاضرات.</div>'}</div></section>`;
+      return `<section class="hero card"><button class="link" onclick="go('mycourses')">← رجوع</button><h2>${esc(c.name)}</h2><p class="muted">إدارة محاضرات الكورس.</p></section><section class="card panel"><div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h3>المحاضرات</h3><button class="btn primary" type="button" onclick="createLecturerLecture('${esc(c.id)}')">＋ إضافة محاضرة</button></div><p class="muted">افتح أي محاضرة لإضافة فيديو أو ملفات PDF من جهازك.</p><div class="list">${lectures.length?lectures.map(x=>`<button class="item lecture" onclick="go('lecturerlecture','${x.id}')" type="button"><div class="icon">🎥</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number??'—')} · اضغط لإضافة فيديو أو ملف</small></div><span class="tag">${x.active?'نشطة':'موقوفة'}</span></button>`).join(''):'<div class="empty">لسه مفيش محاضرات للكورس ده. اضغط «إضافة محاضرة» الأول، وبعدها افتحها وارفع الفيديو أو ملفات PDF.</div>'}</div></section>`;
     }
     return `<section class="hero card"><h2>أهلاً بك في لوحة المحاضر</h2><p class="muted">إدارة كورساتك ومحاضراتك من مكان واحد.</p><div class="grid2"><div class="stat card"><small>كورساتي</small><div class="num">${courses.length}</div></div><div class="stat card"><small>المحاضرات</small><div class="num">${await countLecturesForCourses(courses)}</div></div></div><button class="btn primary" onclick="go('mycourses')">عرض كورساتي</button></section>`;
   }catch(e){
     return `<section class="hero card"><h2>تعذر تحميل لوحة المحاضر</h2><p class="muted">${esc(e.message)}</p></section>`;
   }
 }
+async function createLecturerLecture(courseId){
+ const title=prompt('اسم المحاضرة:');if(title===null)return;
+ if(!title.trim()){toast('اكتب اسم المحاضرة','err');return}
+ const numText=prompt('رقم المحاضرة (اختياري):','1');if(numText===null)return;
+ const n=numText.trim()===''?null:Number(numText);
+ if(n!==null&&(!Number.isInteger(n)||n<1)){toast('رقم المحاضرة لازم يكون رقمًا صحيحًا موجبًا','err');return}
+ const description=prompt('وصف المحاضرة (اختياري):','')||'';
+ try{
+  const me=await api('lecturers?select=id,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');
+  if(!me.length)throw Error('حساب المحاضر غير مكتمل');
+  const owned=await api('courses?select=id,lecturer_id&id=eq.'+encodeURIComponent(courseId)+'&lecturer_id=eq.'+encodeURIComponent(me[0].id)+'&active=eq.true&limit=1');
+  if(!owned.length)throw Error('الكورس غير مرتبط بحسابك أو غير نشط');
+  const body={title:title.trim(),description:description.trim()||null,lecture_number:n,active:true,is_public:false,course_id:Number(courseId),lecturer_id:me[0].id};
+  const result=await api('lectures',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(body)});
+  const created=Array.isArray(result)?result[0]:result;
+  if(!created?.id)throw Error('تم إرسال الطلب لكن لم يتم إرجاع المحاضرة؛ حدّث الصفحة وتحقق من القائمة');
+  toast('تم إنشاء المحاضرة. افتحها لإضافة الفيديو وملفات PDF.','ok');go('lecturerlecture',created.id);
+ }catch(e){toast('تعذر إنشاء المحاضرة: '+(e.message||'خطأ غير معروف'),'err')}
+}
+
 async function lecturerLecturePage(id){
   let l,files=[];
   try{
@@ -243,7 +263,7 @@ async function lecturerLecturePage(id){
   const resources=files.filter(f=>f!==video);
   return `<section class="hero card"><button class="link" onclick="go('lecturercourse','${esc(l.course_id)}')">← رجوع للمحاضرات</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">المحاضرة ${esc(l.lecture_number||'')}</p></section>
   <section class="card panel"><h3>محتوى المحاضرة</h3><p class="muted">${esc(l.description||'لا يوجد وصف مضاف.')}</p>
-  <div class="grid2" style="margin:16px 0"><button class="btn primary" onclick="openLectureResourceForm('${esc(l.id)}','video')">＋ إضافة فيديو</button><button class="btn secondary" onclick="openLectureResourceForm('${esc(l.id)}','file')">＋ إضافة رابط ملف</button></div>
+  <div class="grid2" style="margin:16px 0"><button class="btn primary" onclick="openLectureResourceForm('${esc(l.id)}','video')">＋ إضافة فيديو</button><button class="btn secondary" onclick="openLectureResourceForm('${esc(l.id)}','file')">＋ رفع ملف / PDF</button></div>
   <div class="video">${video?renderVideoResource(video):'<span class="muted">لا يوجد فيديو مضاف لهذه المحاضرة حتى الآن.</span>'}</div>
   <h3>الملفات والمرفقات</h3><div class="list">${resources.length?resources.map(f=>{const href=f.resolved_url||f.file_url||f.url||f.external_url||f.storage_path||'';return href?`<a class="item" href="${esc(href)}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`:`<div class="item"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></div>`}).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
 }
