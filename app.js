@@ -225,12 +225,15 @@ async function lecturerPage(){
 async function createLecturerCourse(){
  const name=prompt('اسم الكورس:');if(name===null)return;if(!name.trim()){toast('اكتب اسم الكورس','err');return}
  const code=prompt('كود الكورس (اختياري):','')||'';
- const description=prompt('وصف الكورس (اختياري):','')||'';
  try{
   const me=await api('lecturers?select=id,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');if(!me.length)throw Error('حساب المحاضر غير مكتمل');
-  const body={name:name.trim(),code:code.trim()||null,description:description.trim()||null,lecturer_id:me[0].id,active:true,is_public:false};
+  const stages=await api('stages?select=id,name,active&active=eq.true&order=id.asc');
+  if(!stages.length)throw Error('لا توجد مراحل دراسية نشطة. اطلب من الإدارة إضافة مرحلة دراسية أولًا.');
+  let stage=stages[0];
+  if(stages.length>1){const opts=stages.map((x,i)=>(i+1)+'. '+x.name).join('\\n');const n=Number(prompt('اختار المرحلة الدراسية للكورس:\\n'+opts,'1'));if(!Number.isInteger(n)||n<1||n>stages.length)return;stage=stages[n-1]}
+  const body={name:name.trim(),code:code.trim()||null,stage_id:stage.id,lecturer_id:me[0].id,active:true,is_public:false};
   const rows=await api('courses',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(body)});const row=Array.isArray(rows)?rows[0]:rows;
-  if(!row?.id)throw Error('لم يتم إرجاع بيانات الكورس؛ راجع الصلاحيات وحقول الكورس المطلوبة');
+  if(!row?.id)throw Error('لم يتم إرجاع بيانات الكورس؛ راجع صلاحيات إضافة الكورسات');
   toast('تم إنشاء الكورس. يمكنك الآن إضافة المحاضرات.','ok');go('lecturercourse',row.id);
  }catch(e){toast('تعذر إنشاء الكورس: '+(e.message||'خطأ غير معروف'),'err')}
 }
