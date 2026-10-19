@@ -320,7 +320,7 @@ function renderVideoResource(f){
 function openLectureResourceForm(lectureId,kind){
  document.querySelector('#resourceModal')?.remove();
  const isVideo=kind==='video';
- const html=`<div class="modal" id="resourceModal"><div class="card"><div class="row"><h2>${isVideo?'رفع فيديو للمحاضرة':'إضافة ملف للمحاضرة'}</h2><button type="button" class="btn secondary" onclick="document.querySelector('#resourceModal')?.remove()">×</button></div><p class="muted">${isVideo?'ارفع ملف الفيديو من جهازك؛ هيُخزَّن داخل مساحة خاصة ويُعرض للطالب داخل المنصة.':'ارفع ملف المحاضرة أو أضف رابطًا للملف.'}</p><form onsubmit="saveLectureResource(event,'${esc(lectureId)}','${kind}')"><div class="field"><label>اسم ${isVideo?'الفيديو':'الملف'}</label><input class="input" name="title" required placeholder="${isVideo?'مثال: المحاضرة الأولى':'مثال: ملخص المحاضرة'}"></div>${isVideo?'<div class="field"><label>ملف الفيديو (MP4 أو MOV أو WebM، حتى 2 جيجابايت)</label><input class="input" name="upload_file" type="file" accept=".mp4,.mov,.webm,.m4v,video/mp4,video/quicktime,video/webm,video/x-m4v" required><small class="muted">الرفع يدعم الاستكمال تلقائيًا عند انقطاع الاتصال في المتصفحات المتوافقة.</small></div>':'<div class="field"><label>رابط الملف (اختياري)</label><input class="input" name="file_url" type="url" placeholder="رابط HTTPS للملف"><div class="field"><label>أو ارفع ملفًا (حد أقصى 100 ميجابايت)</label><input class="input" name="upload_file" type="file" accept=".pdf,.docx,.pptx,.zip,application/pdf,application/zip,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"></div></div>'}<div id="resourceUploadStatus" class="muted" role="status" style="margin:10px 0;display:none"></div><button class="btn primary btn-wide" id="resourceSaveButton">${isVideo?'رفع الفيديو وحفظه':'حفظ الملف'}</button></form></div></div>`;
+ const html=`<div class="modal" id="resourceModal"><div class="card"><div class="row"><h2>${isVideo?'رفع فيديو للمحاضرة':'إضافة ملف للمحاضرة'}</h2><button type="button" class="btn secondary" onclick="document.querySelector('#resourceModal')?.remove()">×</button></div><p class="muted">${isVideo?'ارفع ملف الفيديو من جهازك؛ هيُخزَّن داخل مساحة خاصة ويُعرض للطالب داخل المنصة.':'ارفع ملف المحاضرة أو أضف رابطًا للملف.'}</p><form onsubmit="saveLectureResource(event,'${esc(lectureId)}','${kind}')"><div class="field"><label>اسم ${isVideo?'الفيديو':'الملف'}</label><input class="input" name="title" required placeholder="${isVideo?'مثال: المحاضرة الأولى':'مثال: ملخص المحاضرة'}"></div>${isVideo?'<div class="field"><label>رابط فيديو YouTube</label><input class="input" name="video_url" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." required><small class="muted">ارفع الفيديو على YouTube أولًا، واجعل ظهوره غير مدرج، ثم انسخ الرابط هنا.</small></div>':'<div class="field"><label>رابط الملف (اختياري)</label><input class="input" name="file_url" type="url" placeholder="رابط HTTPS للملف"><div class="field"><label>أو ارفع ملفًا (حد أقصى 100 ميجابايت)</label><input class="input" name="upload_file" type="file" accept=".pdf,.docx,.pptx,.zip,application/pdf,application/zip,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"></div></div>'}<div id="resourceUploadStatus" class="muted" role="status" style="margin:10px 0;display:none"></div><button class="btn primary btn-wide" id="resourceSaveButton">${isVideo?'رفع الفيديو وحفظه':'حفظ الملف'}</button></form></div></div>`;
  document.body.insertAdjacentHTML('beforeend',html);
 }
 function uploadPrivateVideoResumable(file,path){
@@ -334,11 +334,11 @@ function uploadPrivateVideoResumable(file,path){
 }
 async function saveLectureResource(e,lectureId,kind){
  e.preventDefault();
- const fd=new FormData(e.target),title=String(fd.get('title')||'').trim();let url=String(fd.get('file_url')||'').trim();const upload=fd.get('upload_file');const isVideo=kind==='video';
+ const fd=new FormData(e.target),title=String(fd.get('title')||'').trim();let url=String(fd.get('file_url')||'').trim();const upload=fd.get('upload_file');const isVideo=kind==='video';if(isVideo)url=String(fd.get('video_url')||'').trim();
  if(!title){toast('اكتب اسم الملف أو الفيديو','err');return}
- if(isVideo&&!upload?.size){toast('اختار ملف الفيديو من جهازك؛ روابط الفيديو الخارجية غير متاحة هنا','err');return}
+ if(isVideo&&!/^https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\//i.test(url)){toast('أضف رابط فيديو صحيحًا من YouTube','err');return}
  if(!isVideo&&!upload?.size&&!/^https:\/\//i.test(url)){toast('أضف رابط HTTPS أو اختر ملفًا للرفع','err');return}
- if(isVideo&&upload?.size>2147483648){toast('الحد الأقصى لحجم الفيديو 2 جيجابايت','err');return}
+ 
  if(!isVideo&&upload?.size>104857600){toast('الحد الأقصى للملف 100 ميجابايت','err');return}
  let uploadedPath='';
  const button=document.querySelector('#resourceSaveButton');if(button)button.disabled=true;
@@ -349,11 +349,11 @@ async function saveLectureResource(e,lectureId,kind){
   if(!me.length)throw Error('حساب المحاضر غير مكتمل');
   const owned=await api('courses?select=id&lecturer_id=eq.'+encodeURIComponent(me[0].id)+'&id=eq.'+encodeURIComponent(l.course_id)+'&limit=1');
   if(!owned.length)throw Error('لا تملك صلاحية تعديل هذه المحاضرة');
-  let fileType=isVideo?'video':'file';
+  let fileType=isVideo?'youtube':'file';
   if(upload?.size){
    const safe=upload.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(-90)||(isVideo?'lecture.mp4':'file');
    url=l.id+'/'+Date.now()+'-'+safe;uploadedPath=url;
-   if(isVideo){await uploadPrivateVideoResumable(upload,url)}
+   if(isVideo){throw Error('ارفع فيديو YouTube والصق رابطه بدل رفع الملف مباشرة')}
    else{
     const up=await fetch(API+'/storage/v1/object/lecture-assets/'+url.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':upload.type||'application/octet-stream','x-upsert':'false'},body:upload});
     if(!up.ok)throw Error(await up.text());
@@ -363,7 +363,7 @@ async function saveLectureResource(e,lectureId,kind){
   const record={lecture_id:l.id,title,file_url:url,file_type:fileType,active:true};
   await api('lecture_files',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(record)});
   uploadedPath='';
-  document.querySelector('#resourceModal')?.remove();toast(isVideo?'تم رفع الفيديو وحفظه بأمان':'تم حفظ الملف','ok');await render();
+  document.querySelector('#resourceModal')?.remove();toast(isVideo?'تم حفظ رابط فيديو YouTube':'تم حفظ الملف','ok');await render();
  }catch(err){
   if(uploadedPath&&session?.access_token){try{await fetch(API+'/storage/v1/object/lecture-assets/'+uploadedPath.split('/').map(encodeURIComponent).join('/'),{method:'DELETE',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token}})}catch{}}
   if(button)button.disabled=false;
