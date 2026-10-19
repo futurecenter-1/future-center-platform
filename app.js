@@ -373,7 +373,7 @@ async function countLecturesForCourses(courses){
 async function count(table){try{const r=await api(`${table}?select=id`);return Array.isArray(r)?r.length:'—'}catch{return '—'}}
 async function coursesPage(mine){let rows=[];try{if(mine){const me=await api(`students?select=id&auth_user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`);if(me.length){const subs=await api(`student_courses?select=course_id,active,expires_at&student_id=eq.${me[0].id}`);const now=Date.now();const ids=[...new Set(subs.filter(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now)).map(s=>s.course_id))];if(ids.length)rows=await api(`courses?select=id,name,code,is_public,active,stage_id,image_url&id=in.(${ids.join(',')})&active=eq.true&order=name.asc`)} }else rows=await api('courses?select=id,name,code,is_public,active,stage_id,image_url&active=eq.true&order=name.asc')}catch(e){toast('تعذر تحميل الكورسات','err')}return `<section class="hero card"><div class="row"><div><h2>${mine?'كورساتي':'كل الكورسات'}</h2><p class="muted">${mine?'المحتوى المشترك فيه فقط.':'تصفح المواد المتاحة على المنصة.'}</p></div></div></section><section class="grid">${rows.length?rows.map(c=>`<article class="course card"><div class="cover">${c.image_url?`<img src="${esc(c.image_url)}" alt="" style="width:100%;height:100%;object-fit:cover">`:'📚'}</div><div class="body"><span class="tag">${c.is_public?'متاح':'مشتركين فقط'}</span><h3>${esc(c.name)}</h3><p class="muted">إدارة محتوى الكورس ومحاضراته.</p><button class="btn primary" onclick="go('course','${c.id}')">فتح الكورس</button></div></article>`).join(''):`<div class="card empty" style="grid-column:1/-1">لا توجد كورسات لعرضها حالياً.</div>`}</section>`}
 async function coursePage(id){
- let c=null,l=[],student=null,subscribed=false,latestRequest=null;
+ let c=null,l=[],student=null,subscribed=false,latestRequest=null,pdfsByLecture={};
  try{
   const rows=await api('courses?select=id,name,code,is_public,active,stage_id,image_url&id=eq.'+encodeURIComponent(id)+'&active=eq.true&limit=1');c=rows[0];
   if(!c)return '<section class="hero card"><h2>الكورس غير متاح</h2><button class="btn primary" onclick="go(\'catalog\')">العودة للكورسات</button></section>';
@@ -384,14 +384,22 @@ async function coursePage(id){
    const now=Date.now();subscribed=subs.some(s=>s.active!==false&&(!s.expires_at||new Date(s.expires_at).getTime()>now));
    if(!subscribed){const reqs=await api('course_enrollment_requests?select=id,status,created_at&student_id=eq.'+encodeURIComponent(student.id)+'&course_id=eq.'+encodeURIComponent(c.id)+'&order=created_at.desc&limit=1');latestRequest=reqs[0]||null}
   }
-  if(subscribed)l=await api('lectures?select=id,title,description,lecture_number,active,is_public&course_id=eq.'+encodeURIComponent(c.id)+'&active=eq.true&order=lecture_number.asc');
+  if(subscribed){
+   l=await api('lectures?select=id,title,description,lecture_number,active,is_public&course_id=eq.'+encodeURIComponent(c.id)+'&active=eq.true&order=lecture_number.asc');
+   if(l.length){
+    const ids=l.map(x=>x.id).join(',');
+    const files=await api('lecture_files?select=id,title,file_url,file_type,url,external_url,lecture_id,active&lecture_id=in.('+ids+')&active=eq.true');
+    const pdfs=files.filter(f=>/pdf/i.test(String(f.file_type||'')+' '+String(f.title||'')+' '+String(f.file_url||f.url||f.external_url||'')));
+    for(const f of pdfs){const href=await resolveLectureFileUrl(f);if(href)(pdfsByLecture[f.lecture_id]||(pdfsByLecture[f.lecture_id]=[])).push({...f,resolved_url:href})}
+   }
+  }
  }catch(e){console.warn('تعذر تحميل تفاصيل الكورس',e);return '<section class="hero card"><h2>تعذر تحميل الكورس</h2><p class="muted">راجع اتصال الإنترنت أو صلاحيات الحساب وحاول مرة أخرى.</p><button class="btn primary" onclick="render()">إعادة المحاولة</button></section>'}
  let accessPanel='';
  if(!subscribed){
   if(latestRequest&&latestRequest.status==='pending')accessPanel='<section class="card panel"><h3>طلب الاشتراك قيد المراجعة</h3><p class="muted">وصل طلبك لإدارة السنتر. هتظهر المحاضرات بعد مراجعة بياناتك وتفعيل الاشتراك.</p></section>';
   else accessPanel='<section class="card panel"><h3>ابدأ طلب الاشتراك</h3><p class="muted">استكشف الكورس أولًا. عند طلب الاشتراك هنراجع بياناتك الدراسية وشروط الكورس، ثم تراجع الإدارة الطلب قبل فتح المحاضرات.</p>'+(latestRequest&&latestRequest.status==='rejected'?'<p class="muted">الطلب السابق لم تتم الموافقة عليه؛ راجع بياناتك قبل إعادة الإرسال.</p>':'')+'<button class="btn primary" onclick="openCourseEnrollmentForm(\''+esc(c.id)+'\')">طلب الاشتراك ←</button></section>';
  }
- const lectureHtml=subscribed?'<section class="card panel"><h3>المحاضرات</h3><div class="list">'+(l.length?l.map(x=>'<button class="item lecture '+(x.is_public?'':'locked')+'" onclick="go(\'lecture\',\''+x.id+'\')"><div class="icon">'+(x.is_public?'▶':'🔒')+'</div><div class="item-main"><b>'+esc(x.title)+'</b><small>المحاضرة '+esc(x.lecture_number)+'</small></div></button>').join(''):'<div class="empty">لا توجد محاضرات متاحة حالياً.</div>')+'</div></section>':'';
+ const lectureHtml=subscribed?'<section class="card panel fc-course-lectures"><div class="fc-course-section-heading"><h3>المحاضرات</h3><span class="fc-course-count">'+l.length+' محاضرة</span></div><div class="fc-course-lecture-list">'+(l.length?l.map(x=>'<div class="fc-course-lecture"><button class="item lecture '+(x.is_public?'':'locked')+'" onclick="go(\'lecture\',\''+esc(x.id)+'\')"><div class="icon">'+(x.is_public?'▶':'🔒')+'</div><div class="item-main"><b>'+esc(x.title)+'</b><small>المحاضرة '+esc(x.lecture_number??'—')+'</small></div><span class="fc-lecture-open">فتح المحاضرة ←</span></button>'+((pdfsByLecture[x.id]||[]).length?'<div class="fc-lecture-pdfs">'+pdfsByLecture[x.id].map(f=>'<div class="fc-lecture-pdf"><div class="fc-pdf-icon">PDF</div><div class="fc-pdf-info"><b>'+esc(f.title||'ملف المحاضرة')+'</b><small>ملف PDF خاص بهذه المحاضرة</small></div><a class="fc-pdf-view" href="'+esc(f.resolved_url)+'" target="_blank" rel="noopener">عرض PDF ↗</a></div>').join('')+'</div>':'<div class="fc-lecture-no-pdf"><span>📄</span> لا يوجد PDF مضاف لهذه المحاضرة بعد</div>')+'</div>').join(''):'<div class="empty">لا توجد محاضرات متاحة حالياً.</div>')+'</div></section>':'';
  return '<section class="hero card"><button class="link" onclick="go(\'catalog\')">← رجوع لكل الكورسات</button><h2>'+esc(c.name)+'</h2><p class="muted">'+esc(c.code?'كود الكورس: '+c.code:'استكشف تفاصيل الكورس والمحاضر والمحتوى المتاح.')+'</p><span class="tag">'+(c.is_public?'محاضرات مجانية متاحة':'اشتراك مطلوب للمحاضرات')+'</span></section>'+accessPanel+lectureHtml;
 }
 async function openCourseEnrollmentForm(courseId){
