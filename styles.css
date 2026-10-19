@@ -782,3 +782,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .fc-pdf-view{white-space:nowrap;text-decoration:none!important;font-size:11px;font-weight:800;color:#102033!important;background:linear-gradient(115deg,#ffe0a0,#d8a748);border-radius:10px;padding:9px 10px}
 .fc-lecture-no-pdf{display:flex;align-items:center;gap:7px;padding:10px 4px 1px;color:#7f95aa;font-size:11px}
 @media(max-width:560px){.fc-course-lectures{padding:13px!important;border-radius:19px!important}.fc-course-lecture{padding:8px;border-radius:14px}.fc-lecture-open{font-size:9px}.fc-pdf-view{font-size:10px;padding:8px}.fc-pdf-info b{font-size:11px}.fc-pdf-icon{min-width:35px;height:39px}}
+
+/* PDF attachments directly under each lecture in lecturer course manager */
+.fc-lecturer-lecture-list{display:flex;flex-direction:column;gap:13px;margin-top:14px}
+.fc-lecturer-lecture-card{border:1px solid #8db9e72b;border-radius:18px;padding:10px;background:linear-gradient(145deg,#ffffff08,#ffffff03);overflow:hidden}
+.fc-lecturer-lecture-card>.item.lecture{margin:0;border:0!important;background:transparent!important}
+.fc-lecturer-pdfs{display:flex;flex-direction:column;gap:8px;padding:8px 4px 2px}
+.fc-lecturer-pdf{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #d9b15f44;border-radius:13px;background:#d9b15f0c;min-width:0}
+.fc-lecturer-pdf .fc-pdf-icon{display:grid;place-items:center;flex:0 0 40px;height:44px;border-radius:10px;background:#ff77771a;color:#ff9999;font-size:11px;font-weight:900}
+.fc-lecturer-pdf .fc-pdf-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.fc-lecturer-pdf .fc-pdf-info b{color:#f7f7fb;font-size:12px;overflow-wrap:anywhere}
+.fc-lecturer-pdf .fc-pdf-info small{color:#a9bdd1;font-size:10px}
+.fc-lecturer-pdf .fc-pdf-view{flex:0 0 auto;padding:9px 10px;border-radius:10px;background:#d9b15f;color:#102033;text-decoration:none;font-weight:800;font-size:11px}
+.fc-lecturer-no-pdf{padding:10px 12px;margin:6px 3px;color:#a9bdd1;font-size:11px;border-radius:11px;background:#ffffff05}
+.fc-lecturer-upload-pdf{width:100%;margin-top:9px;padding:10px;border:1px dashed #8db9e766;border-radius:11px;color:#b9dfff;background:#8db9e70b;font-weight:700;cursor:pointer}
+@media(max-width:420px){.fc-lecturer-pdf{gap:7px;padding:8px}.fc-lecturer-pdf .fc-pdf-view{font-size:10px;padding:8px}.fc-lecturer-pdf .fc-pdf-icon{flex-basis:34px;height:38px}}
