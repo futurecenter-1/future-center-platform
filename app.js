@@ -205,26 +205,57 @@ async function studentPage(){
 }
 function filterStudentCourses(q){const v=String(q||'').trim().toLocaleLowerCase();document.querySelectorAll('[data-course-search]').forEach(el=>{el.style.display=el.dataset.courseSearch.toLocaleLowerCase().includes(v)?'':'none'})}
 async function lecturerPage(){
-  let courses=[];
-  try{
-    const me=await api(`lecturers?select=id,full_name,email,active&auth_user_id=eq.${encodeURIComponent(session.user.id)}&active=eq.true&limit=1`);
-    const lecturer=me?.[0];
-    if(!lecturer) return `<section class="hero card"><h2>حساب المحاضر غير مكتمل</h2><p class="muted">لم يتم ربط حسابك بملف محاضر بعد.</p></section>`;
-    courses=await api(`courses?select=id,name,code,is_public,active,stage_id&lecturer_id=eq.${lecturer.id}&order=name.asc`);
-    if(state.view==='mycourses'){
-      return `<section class="hero card"><h2>كورساتي</h2><p class="muted">الكورسات الخاصة بك فقط.</p></section><section class="grid">${courses.length?courses.map(c=>`<article class="course card"><div class="cover">📚</div><div class="body"><span class="tag">${c.is_public?'متاح':'مشتركين فقط'}</span><h3>${esc(c.name)}</h3><p class="muted">إدارة محتوى الكورس ومحاضراته.</p><button class="btn primary" onclick="go('lecturercourse','${c.id}')">إدارة المحاضرات</button></div></article>`).join(''):'<div class="card empty" style="grid-column:1/-1">لا توجد كورسات مرتبطة بحسابك.</div>'}</section>`;
-    }
-    if(state.view==='lecturercourse'){
-      const c=courses.find(x=>String(x.id)===String(state.data.id));
-      if(!c) return `<section class="card empty">هذا الكورس غير متاح لحسابك.</section>`;
-      const lectures=await api(`lectures?select=id,title,description,lecture_number,active,is_public,course_id&course_id=eq.${c.id}&order=lecture_number.asc`);
-      return `<section class="hero card"><button class="link" onclick="go('mycourses')">← رجوع</button><h2>${esc(c.name)}</h2><p class="muted">إدارة محاضرات الكورس.</p></section><section class="card panel"><div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h3>المحاضرات</h3><button class="btn primary" type="button" onclick="createLecturerLecture('${esc(c.id)}')">＋ إضافة محاضرة</button></div><p class="muted">افتح أي محاضرة لإضافة فيديو أو ملفات PDF من جهازك.</p><div class="list">${lectures.length?lectures.map(x=>`<button class="item lecture" onclick="go('lecturerlecture','${x.id}')" type="button"><div class="icon">🎥</div><div class="item-main"><b>${esc(x.title)}</b><small>المحاضرة ${esc(x.lecture_number??'—')} · اضغط لإضافة فيديو أو ملف</small></div><span class="tag">${x.active?'نشطة':'موقوفة'}</span></button>`).join(''):'<div class="empty">لسه مفيش محاضرات للكورس ده. اضغط «إضافة محاضرة» الأول، وبعدها افتحها وارفع الفيديو أو ملفات PDF.</div>'}</div></section>`;
-    }
-    return `<section class="hero card"><h2>أهلاً بك في لوحة المحاضر</h2><p class="muted">إدارة كورساتك ومحاضراتك من مكان واحد.</p><div class="grid2"><div class="stat card"><small>كورساتي</small><div class="num">${courses.length}</div></div><div class="stat card"><small>المحاضرات</small><div class="num">${await countLecturesForCourses(courses)}</div></div></div><button class="btn primary" onclick="go('mycourses')">عرض كورساتي</button></section>`;
-  }catch(e){
-    return `<section class="hero card"><h2>تعذر تحميل لوحة المحاضر</h2><p class="muted">${esc(e.message)}</p></section>`;
+ let courses=[],lecturer;
+ try{
+  const me=await api('lecturers?select=id,full_name,email,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');
+  lecturer=me?.[0];
+  if(!lecturer)return '<section class="hero card"><h2>حساب المحاضر غير مكتمل</h2><p class="muted">لم يتم ربط حسابك بملف محاضر بعد.</p></section>';
+  courses=await api('courses?select=id,name,code,is_public,active,stage_id&lecturer_id=eq.'+encodeURIComponent(lecturer.id)+'&order=name.asc');
+  const totalLectures=await countLecturesForCourses(courses);
+  const actions='<section class="card panel fc-lecturer-actions"><h3>إدارة المحتوى</h3><p class="muted">ابدأ بإنشاء كورس، ثم أضف محاضراته وارفع الفيديوهات وملفات PDF من جهازك.</p><div class="fc-lecturer-action-grid"><button type="button" class="fc-lecturer-action fc-add-course" onclick="createLecturerCourse()"><span>＋</span><b>إضافة كورس</b><small>إنشاء كورس جديد</small></button><button type="button" class="fc-lecturer-action fc-add-lecture" onclick="createLecturerLecturePrompt()"><span>🎥</span><b>إضافة محاضرة</b><small>داخل أحد كورساتك</small></button><button type="button" class="fc-lecturer-action fc-add-pdf" onclick="openLecturerFilePicker()"><span>📄</span><b>رفع PDF</b><small>إلى محاضرة موجودة</small></button></div></section>';
+  if(state.view==='mycourses')return '<section class="hero card"><h2>كورساتي</h2><p class="muted">الكورسات الخاصة بك فقط.</p></section>'+actions+'<section class="grid">'+(courses.length?courses.map(c=>'<article class="course card"><div class="cover">📚</div><div class="body"><span class="tag">'+(c.is_public?'متاح':'مشتركين فقط')+'</span><h3>'+esc(c.name)+'</h3><p class="muted">إدارة محتوى الكورس ومحاضراته.</p><button class="btn primary" onclick="go(\'lecturercourse\',\''+esc(c.id)+'\')">إدارة المحاضرات</button></div></article>').join(''):'<div class="card empty" style="grid-column:1/-1">لسه مفيش كورسات مرتبطة بيك. اضغط «إضافة كورس» للبدء.</div>')+'</section>';
+  if(state.view==='lecturercourse'){
+   const co=courses.find(x=>String(x.id)===String(state.data.id));if(!co)return '<section class="card empty">هذا الكورس غير متاح لحسابك.</section>';
+   const lectures=await api('lectures?select=id,title,description,lecture_number,active,is_public,course_id&course_id=eq.'+encodeURIComponent(co.id)+'&order=lecture_number.asc');
+   return '<section class="hero card"><button class="link" onclick="go(\'mycourses\')">← رجوع</button><h2>'+esc(co.name)+'</h2><p class="muted">إدارة محاضرات الكورس.</p></section>'+actions+'<section class="card panel"><div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h3>المحاضرات</h3><button class="btn primary" type="button" onclick="createLecturerLecture(\''+esc(co.id)+'\')">＋ إضافة محاضرة</button></div><p class="muted">افتح المحاضرة لرفع الفيديو وملفات PDF.</p><div class="list">'+(lectures.length?lectures.map(x=>'<button class="item lecture" onclick="go(\'lecturerlecture\',\''+esc(x.id)+'\')" type="button"><div class="icon">🎥</div><div class="item-main"><b>'+esc(x.title)+'</b><small>المحاضرة '+esc(x.lecture_number??'—')+' · اضغط لإضافة فيديو أو PDF</small></div><span class="tag">'+(x.active?'نشطة':'موقوفة')+'</span></button>').join(''):'<div class="empty">لا توجد محاضرات. أضف أول محاضرة من الزر بالأعلى.</div>')+'</div></section>';
   }
+  return '<section class="hero card"><h2>أهلاً بك في لوحة المحاضر</h2><p class="muted">إدارة كورساتك ومحاضراتك من مكان واحد.</p><div class="grid2"><div class="stat card"><small>كورساتي</small><div class="num">'+courses.length+'</div></div><div class="stat card"><small>المحاضرات</small><div class="num">'+totalLectures+'</div></div></div><button class="btn primary" onclick="go(\'mycourses\')">عرض كورساتي</button></section>'+actions;
+ }catch(e){return '<section class="hero card"><h2>تعذر تحميل لوحة المحاضر</h2><p class="muted">'+esc(e.message)+'</p></section>'}
 }
+async function createLecturerCourse(){
+ const name=prompt('اسم الكورس:');if(name===null)return;if(!name.trim()){toast('اكتب اسم الكورس','err');return}
+ const code=prompt('كود الكورس (اختياري):','')||'';
+ const description=prompt('وصف الكورس (اختياري):','')||'';
+ try{
+  const me=await api('lecturers?select=id,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');if(!me.length)throw Error('حساب المحاضر غير مكتمل');
+  const body={name:name.trim(),code:code.trim()||null,description:description.trim()||null,lecturer_id:me[0].id,active:true,is_public:false};
+  const rows=await api('courses',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(body)});const row=Array.isArray(rows)?rows[0]:rows;
+  if(!row?.id)throw Error('لم يتم إرجاع بيانات الكورس؛ راجع الصلاحيات وحقول الكورس المطلوبة');
+  toast('تم إنشاء الكورس. يمكنك الآن إضافة المحاضرات.','ok');go('lecturercourse',row.id);
+ }catch(e){toast('تعذر إنشاء الكورس: '+(e.message||'خطأ غير معروف'),'err')}
+}
+async function createLecturerLecturePrompt(){
+ try{
+  const me=await api('lecturers?select=id&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');if(!me.length)throw Error('حساب المحاضر غير مكتمل');
+  const courses=await api('courses?select=id,name&lecturer_id=eq.'+encodeURIComponent(me[0].id)+'&active=eq.true&order=name.asc');
+  if(!courses.length){toast('أضف كورسًا أولًا قبل إنشاء المحاضرة','err');return}
+  let choice;
+  if(courses.length===1)choice=courses[0];else{const opts=courses.map((x,i)=>(i+1)+'. '+x.name).join('\n');const n=Number(prompt('اختار رقم الكورس:\n'+opts,'1'));if(!Number.isInteger(n)||n<1||n>courses.length)return;choice=courses[n-1]}
+  await createLecturerLecture(choice.id);
+ }catch(e){toast('تعذر اختيار الكورس: '+(e.message||'خطأ'),'err')}
+}
+async function openLecturerFilePicker(){
+ try{
+  const me=await api('lecturers?select=id&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');if(!me.length)throw Error('حساب المحاضر غير مكتمل');
+  const courses=await api('courses?select=id,name&lecturer_id=eq.'+encodeURIComponent(me[0].id)+'&active=eq.true&order=name.asc');
+  if(!courses.length){toast('أضف كورسًا أولًا','err');return}
+  const all=[];for(const co of courses){const ls=await api('lectures?select=id,title,course_id&course_id=eq.'+encodeURIComponent(co.id)+'&active=eq.true&order=lecture_number.asc');for(const l of ls)all.push({...l,course_name:co.name})}
+  if(!all.length){toast('أضف محاضرة أولًا، وبعدها ارفع PDF','err');return}
+  let l;if(all.length===1)l=all[0];else{const opts=all.map((x,i)=>(i+1)+'. '+x.course_name+' — '+x.title).join('\n');const n=Number(prompt('اختار المحاضرة لرفع PDF:\n'+opts,'1'));if(!Number.isInteger(n)||n<1||n>all.length)return;l=all[n-1]}
+  openLectureResourceForm(l.id,'file');
+ }catch(e){toast('تعذر فتح اختيار المحاضرة: '+(e.message||'خطأ'),'err')}
+}
+
 async function createLecturerLecture(courseId){
  const title=prompt('اسم المحاضرة:');if(title===null)return;
  if(!title.trim()){toast('اكتب اسم المحاضرة','err');return}
