@@ -48,7 +48,8 @@ jobs:
         run: npx cap sync ios
       - name: Build iOS Simulator app
         run: |
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          test -d ios/App/App.xcworkspace
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
       - name: Package simulator app
         run: |
           APP_PATH="build/Build/Products/Debug-iphonesimulator/App.app"
