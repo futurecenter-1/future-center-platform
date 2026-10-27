@@ -26,11 +26,30 @@ if (source.includes('FLAG_SECURE')) {
   process.exit(0);
 }
 if (file.endsWith('.java')) {
-  source = source.replace(/(package [^;]+;\s*)/, '$1\nimport android.view.WindowManager;\n');
-  source = source.replace(/(super\.onCreate\([^;]*\);)/, '$1\n        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);');
+  source = source.replace(/(package [^;]+;\s*)/, '$1\nimport android.os.Bundle;\nimport android.view.WindowManager;\n');
+  if (/protected void onCreate\(/.test(source)) {
+    source = source.replace(/(super\.onCreate\([^;]*\);)/, '$1\n        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);');
+  } else {
+    source = source.replace(/}\s*$/, `    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+    }
+}
+`);
+  }
 } else {
-  source = source.replace(/(package [^\n]+\n)/, '$1\nimport android.view.WindowManager\n');
-  source = source.replace(/(super\.onCreate\([^\n]*\))/m, '$1\n        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)');
+  source = source.replace(/(package [^\n]+\n)/, '$1\nimport android.os.Bundle\nimport android.view.WindowManager\n');
+  if (/override fun onCreate\(/.test(source)) {
+    source = source.replace(/(super\.onCreate\([^\n]*\))/m, '$1\n        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)');
+  } else {
+    source = source.replace(/}\s*$/, `    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+    }
+}
+`);
+  }
 }
 if (!source.includes('FLAG_SECURE')) throw new Error('Could not safely patch MainActivity.');
 await writeFile(file, source);
