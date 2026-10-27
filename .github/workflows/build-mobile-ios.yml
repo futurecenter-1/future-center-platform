@@ -1,0 +1,63 @@
+name: Build Future Center iOS Simulator App
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - ios-app-prototype
+    paths:
+      - 'app.js'
+      - 'index.html'
+      - 'login.html'
+      - 'register.html'
+      - 'reset.html'
+      - 'student.html'
+      - 'lecture.html'
+      - 'admin.html'
+      - 'admin/**'
+      - 'styles.css'
+      - 'auth.css'
+      - 'config.js'
+      - 'manifest.json'
+      - 'icons/**'
+      - 'package.json'
+      - 'capacitor.config.ts'
+      - 'scripts/**'
+      - '.github/workflows/build-mobile-ios.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios-simulator:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Prepare web assets
+        run: node scripts/sync-mobile-web.mjs
+      - name: Generate iOS project
+        run: npx cap add ios
+      - name: Sync Capacitor
+        run: npx cap sync ios
+      - name: Build iOS Simulator app
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Package simulator app
+        run: |
+          APP_PATH="build/Build/Products/Debug-iphonesimulator/App.app"
+          test -d "$APP_PATH"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" future-center-ios-simulator.zip
+      - name: Upload simulator build
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-center-ios-simulator
+          path: future-center-ios-simulator.zip
+          if-no-files-found: error
+          retention-days: 14
