@@ -24,3 +24,7 @@ Debug APK output: `android/app/build/outputs/apk/debug/app-debug.apk`.
 - The current site embeds unlisted YouTube videos. A secure app window does not prevent someone from sharing a YouTube URL they obtain. For stronger content protection, video hosting/player access and tokenized playback must be reviewed separately.
 - iOS requires a separate native implementation and testing. iOS does not provide a universal public API to prevent ordinary screenshots; recording/capture detection can be used to hide content in supported cases.
 - No APK has been built or device-tested merely by adding these project files. Test login, course access, video playback, screenshots, recording, and app updates on physical devices before distribution.
+
+## iOS prototype
+
+This branch also includes `@capacitor/ios` and a GitHub Actions workflow at `.github/workflows/build-mobile-ios.yml`. The workflow builds an unsigned iOS Simulator `.app` on a macOS runner and uploads it as an artifact. This is for compile/simulator validation only; it is not an IPA and cannot be installed on a physical iPhone. Installing on a real iPhone requires an Apple signing workflow. iOS screenshot prevention is not guaranteed; see `mobile/IOS-AND-VIDEO-SECURITY.md` for the current security findings and required checks.
