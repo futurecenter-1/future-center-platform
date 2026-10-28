@@ -486,8 +486,10 @@ async function lecturePage(id){
   }catch(err){
     return `<section class="hero card"><h2>تعذر فتح المحاضرة</h2><p class="muted">المحتوى غير متاح لحسابك حاليًا، أو حدث خطأ في الاتصال. تأكد من الاشتراك ثم حاول مرة أخرى.</p><button class="btn primary" onclick="go('courses')">العودة للكورسات</button></section>`;
   }
-  const video=files.find(f=>{const u=String(f.file_url||f.url||f.external_url||'').trim();return /video|youtube|فيديو/i.test(String(f.file_type||''))&&u||/youtu\.be|youtube\.com|youtube-nocookie\.com/i.test(u)});
-  const resources=files.filter(f=>f!==video);
+  const isVideoResource=f=>{const u=String(f.file_url||f.url||f.external_url||'').trim();return !!u&&(/video|youtube|فيديو/i.test(String(f.file_type||''))||/youtu\.be|youtube\.com|youtube-nocookie\.com/i.test(u))};
+  const videos=files.filter(isVideoResource);
+  const video=videos[videos.length-1];
+  const resources=files.filter(f=>!isVideoResource(f));
   return `<section class="hero card"><button class="link" onclick="go('course','${l.course_id}')">← رجوع للكورس</button><h2>${esc(l.title||'المحاضرة')}</h2><p class="muted">${esc(l.description||'')}</p></section><section class="card panel"><div class="video">${video?renderVideoResource(video,studentName):'<span class="muted">سيظهر الفيديو هنا بعد إضافته من المحاضر.</span>'}</div><h3>الملفات</h3><div class="list">${resources.length?resources.map(f=>`<a class="item" href="${esc(f.resolved_url||f.file_url||f.url||f.external_url||'#')}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`).join(''):'<div class="empty">لا توجد ملفات.</div>'}</div></section>`}
 
 async function redesignedStudentHome(){
