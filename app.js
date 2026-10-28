@@ -312,13 +312,21 @@ async function lecturerLecturePage(id){
   <h3>الملفات والمرفقات</h3><div class="list">${resources.length?resources.map(f=>{const href=f.resolved_url||f.file_url||f.url||f.external_url||f.storage_path||'';return href?`<a class="item" href="${esc(href)}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`:`<div class="item"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></div>`}).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
 }
 function renderVideoResource(f,studentName=''){
-  const raw=String(f.resolved_url||f.file_url||f.url||f.external_url||'');
-  const m=raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-  // Embed without exposing a clickable YouTube URL in the page. YouTube still controls
-  // its own player UI, so this reduces visible sharing/navigation rather than preventing extraction.
-  if(m) return `<div class="fc-video-embed" style="position:relative;padding-top:56.25%;overflow:hidden;border-radius:16px;background:#000"><iframe src="https://www.youtube-nocookie.com/embed/${m[1]}?controls=1&rel=0&playsinline=1&iv_load_policy=3" title="${esc(f.title||'فيديو المحاضرة')}" style="position:absolute;inset:0;width:100%;height:100%;border:0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><div aria-hidden="true" style="position:absolute;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;color:rgba(255,255,255,.52);font-size:clamp(12px,2.4vw,22px);font-weight:800;text-shadow:0 1px 4px #000;transform:rotate(-18deg);user-select:none;-webkit-user-select:none"><span>FUTURE CENTER · محتوى تعليمي خاص</span>${studentName?`<span style="font-size:clamp(11px,2vw,18px)">خاص بالطالب: ${esc(studentName)}</span>`:''}</div></div>`;
+  const raw=String(f.resolved_url||f.file_url||f.url||f.external_url||'').trim();
+  let videoId='';
+  try{
+    const u=new URL(raw);
+    const host=u.hostname.toLowerCase().replace(/^www\./,'');
+    if(host==='youtu.be') videoId=u.pathname.split('/').filter(Boolean)[0]||'';
+    else if(['youtube.com','m.youtube.com','music.youtube.com','youtube-nocookie.com'].includes(host)){
+      const parts=u.pathname.split('/').filter(Boolean);
+      if(u.pathname==='/watch') videoId=u.searchParams.get('v')||'';
+      else if(['embed','shorts','live','v'].includes(parts[0])) videoId=parts[1]||'';
+    }
+  }catch{}
+  if(/^[A-Za-z0-9_-]{6,}$/.test(videoId)) return `<div class="fc-video-embed" style="position:relative;padding-top:56.25%;overflow:hidden;border-radius:16px;background:#000"><iframe src="https://www.youtube-nocookie.com/embed/${videoId}?controls=1&rel=0&playsinline=1&iv_load_policy=3" title="${esc(f.title||'فيديو المحاضرة')}" style="position:absolute;inset:0;width:100%;height:100%;border:0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><div aria-hidden="true" style="position:absolute;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;color:rgba(255,255,255,.52);font-size:clamp(12px,2.4vw,22px);font-weight:800;text-shadow:0 1px 4px #000;transform:rotate(-18deg);user-select:none;-webkit-user-select:none"><span>FUTURE CENTER · محتوى تعليمي خاص</span>${studentName?`<span style="font-size:clamp(11px,2vw,18px)">خاص بالطالب: ${esc(studentName)}</span>`:''}</div></div>`;
   if(/\.(mp4|webm|ogg)(\?|$)/i.test(raw)) return `<video controls playsinline controlsList="nodownload noplaybackrate" disablePictureInPicture style="width:100%;border-radius:16px" src="${esc(raw)}"></video>`;
-  return `<span class="muted">تعذر عرض الفيديو بهذا الرابط.</span>`;
+  return `<span class="muted">تعذر عرض الفيديو بهذا الرابط. تأكد من نسخ رابط YouTube كاملًا.</span>`;
 }
 function openLectureResourceForm(lectureId,kind){
  document.querySelector('#resourceModal')?.remove();
