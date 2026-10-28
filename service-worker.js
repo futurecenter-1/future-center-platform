@@ -1,5 +1,5 @@
-const CACHE_NAME = 'future-center-shell-v52';
-const APP_SHELL = ['./', './index.html', './login.html', './styles.css', './styles.css?v=catalog-flow-v2-20261013', './styles.css?v=youtube-player-watermark-v3-20261019', './config.js', './app.js', './app-lecture-preview.js?v=20261028-2', './manifest.json', './icons/fc-icon.svg', './icons/future-center-original-256.jpg', './icons/future-center-180.png', './icons/future-center-192.png', './icons/future-center-512.png'];
+const CACHE_NAME = 'future-center-shell-v53';
+const APP_SHELL = ['./', './index.html', './login.html', './styles.css', './styles.css?v=dr-sherif-cinematic-v1', './styles.css?v=catalog-flow-v2-20261013', './styles.css?v=youtube-player-watermark-v3-20261019', './config.js', './app.js', './app-lecture-preview.js?v=dr-sherif-cinematic-v1', './manifest.json', './icons/fc-icon.svg', './icons/future-center-original-256.jpg', './icons/future-center-180.png', './icons/future-center-192.png', './icons/future-center-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });
