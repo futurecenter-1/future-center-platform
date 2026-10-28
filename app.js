@@ -221,7 +221,7 @@ async function lecturerPage(){
    if(lectures.length){
     try{
      const ids=lectures.map(x=>x.id).join(',');
-     const resources=await api('lecture_files?select=id,title,file_url,file_type,url,external_url,lecture_id,active&lecture_id=in.('+ids+')&active=eq.true');
+     const resources=await api('lecture_files?select=id,title,file_url,file_type,lecture_id,active&lecture_id=in.('+ids+')&active=eq.true');
      const pdfs=resources.filter(f=>/pdf/i.test(String(f.file_type||'')+' '+String(f.title||'')+' '+String(f.file_url||f.url||f.external_url||'')));
      for(const f of pdfs){const href=await resolveLectureFileUrl(f);if(href)(pdfsByLecture[f.lecture_id]||(pdfsByLecture[f.lecture_id]=[])).push({...f,resolved_url:href})}
     }catch(err){console.warn('تعذر تحميل ملفات PDF للمحاضر',err)}
@@ -408,7 +408,7 @@ async function coursePage(id){
    l=await api('lectures?select=id,title,description,lecture_number,active,is_public&course_id=eq.'+encodeURIComponent(c.id)+'&active=eq.true&order=lecture_number.asc');
    if(l.length){
     const ids=l.map(x=>x.id).join(',');
-    const files=await api('lecture_files?select=id,title,file_url,file_type,url,external_url,lecture_id,active&lecture_id=in.('+ids+')&active=eq.true');
+    const files=await api('lecture_files?select=id,title,file_url,file_type,lecture_id,active&lecture_id=in.('+ids+')&active=eq.true');
     const pdfs=files.filter(f=>/pdf/i.test(String(f.file_type||'')+' '+String(f.title||'')+' '+String(f.file_url||f.url||f.external_url||'')));
     for(const f of pdfs){const href=await resolveLectureFileUrl(f);if(href)(pdfsByLecture[f.lecture_id]||(pdfsByLecture[f.lecture_id]=[])).push({...f,resolved_url:href})}
    }
