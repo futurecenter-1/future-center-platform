@@ -311,6 +311,14 @@ async function lecturerLecturePage(id){
   <div class="video" style="position:relative">${video?renderVideoResource(video):'<span class="muted">لا يوجد فيديو مضاف لهذه المحاضرة حتى الآن.</span>'}</div>
   <h3>الملفات والمرفقات</h3><div class="list">${resources.length?resources.map(f=>{const href=f.resolved_url||f.file_url||f.url||f.external_url||f.storage_path||'';return href?`<a class="item" href="${esc(href)}" target="_blank" rel="noopener"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></a>`:`<div class="item"><div class="icon">📄</div><div class="item-main"><b>${esc(f.title||'ملف')}</b><small>${esc(f.file_type||'ملف')}</small></div></div>`}).join(''):'<div class="empty">لا توجد ملفات مضافة.</div>'}</div></section>`;
 }
+function playLectureVideo(button){
+  const frame=button?.closest('.fc-video-frame');
+  if(!frame)return;
+  const id=String(frame.dataset.videoId||'');
+  if(!/^[A-Za-z0-9_-]{11}$/.test(id))return;
+  const studentName=frame.dataset.student||'';
+  frame.innerHTML=`<iframe src="https://www.youtube.com/embed/${id}?playsinline=1&rel=0&autoplay=1" title="فيديو المحاضرة" style="position:absolute;inset:0;width:100%;height:100%;border:0" referrerpolicy="origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><div aria-hidden="true" style="position:absolute;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;color:rgba(255,255,255,.38);font-size:clamp(12px,2.4vw,22px);font-weight:800;text-shadow:0 1px 4px #000;transform:rotate(-18deg);user-select:none;-webkit-user-select:none"><span>FUTURE CENTER · محتوى تعليمي خاص</span>${studentName?`<span style="font-size:clamp(11px,2vw,18px)">خاص بالطالب: ${esc(studentName)}</span>`:''}</div>`;
+}
 function renderVideoResource(f,studentName=''){
   const raw=String(f.resolved_url||f.file_url||f.url||f.external_url||'').trim();
   let videoId='';
@@ -324,9 +332,9 @@ function renderVideoResource(f,studentName=''){
       else if(['embed','shorts','live','v'].includes(parts[0])) videoId=parts[1]||'';
     }
   }catch{}
-  if(/^[A-Za-z0-9_-]{11}$/.test(videoId)) return `<div class="fc-video-frame" style="position:absolute;inset:0;width:100%;height:100%;background:#000"><iframe src="https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0" title="${esc(f.title||'فيديو المحاضرة')}" style="position:absolute;inset:0;width:100%;height:100%;border:0" referrerpolicy="origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><div aria-hidden="true" title="Future Center" style="position:absolute;right:0;bottom:0;z-index:4;width:76px;height:30px;background:transparent;pointer-events:auto"></div><div aria-hidden="true" style="position:absolute;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;color:rgba(255,255,255,.38);font-size:clamp(12px,2.4vw,22px);font-weight:800;text-shadow:0 1px 4px #000;transform:rotate(-18deg);user-select:none;-webkit-user-select:none"><span>FUTURE CENTER · محتوى تعليمي خاص</span>${studentName?`<span style="font-size:clamp(11px,2vw,18px)">خاص بالطالب: ${esc(studentName)}</span>`:''}</div></div>`;
+  if(/^[A-Za-z0-9_-]{11}$/.test(videoId)) return `<div class="fc-video-frame" data-video-id="${videoId}" data-student="${esc(studentName)}" style="position:absolute;inset:0;width:100%;height:100%;background:#000;overflow:hidden;border-radius:16px"><img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" alt="معاينة المحاضرة" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"><button type="button" onclick="playLectureVideo(this)" aria-label="تشغيل المحاضرة" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;border:0;border-radius:18px;background:#f00;color:#fff;width:76px;height:54px;font-size:26px;box-shadow:0 2px 12px #0008">▶</button><div aria-hidden="true" style="position:absolute;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;color:rgba(255,255,255,.38);font-size:clamp(12px,2.4vw,22px);font-weight:800;text-shadow:0 1px 4px #000;transform:rotate(-18deg);user-select:none;-webkit-user-select:none"><span>FUTURE CENTER · محتوى تعليمي خاص</span>${studentName?`<span style="font-size:clamp(11px,2vw,18px)">خاص بالطالب: ${esc(studentName)}</span>`:''}</div></div>`;
   if(/\\.(mp4|webm|ogg)(\\?|$)/i.test(raw)) return `<video controls playsinline controlsList="nodownload noplaybackrate" disablePictureInPicture style="width:100%;height:100%;border-radius:16px" src="${esc(raw)}"></video>`;
-  return `<span class="muted">تعذر عرض الفيديو بهذا الرابط. تأكد من نسخ رابط YouTube كاملًا.</span>`;
+  return '<span class="muted">تعذر عرض الفيديو بهذا الرابط. تأكد من نسخ رابط YouTube كاملًا.</span>';
 }
 function openLectureResourceForm(lectureId,kind){
  document.querySelector('#resourceModal')?.remove();
