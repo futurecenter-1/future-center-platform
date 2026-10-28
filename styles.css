@@ -797,3 +797,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .fc-lecturer-no-pdf{padding:10px 12px;margin:6px 3px;color:#a9bdd1;font-size:11px;border-radius:11px;background:#ffffff05}
 .fc-lecturer-upload-pdf{width:100%;margin-top:9px;padding:10px;border:1px dashed #8db9e766;border-radius:11px;color:#b9dfff;background:#8db9e70b;font-weight:700;cursor:pointer}
 @media(max-width:420px){.fc-lecturer-pdf{gap:7px;padding:8px}.fc-lecturer-pdf .fc-pdf-view{font-size:10px;padding:8px}.fc-lecturer-pdf .fc-pdf-icon{flex-basis:34px;height:38px}}
+
+
+/* Lecturer form polish: mobile-first, accessible glass modal */
+.fc-lecturer-form{width:min(560px,calc(100vw - 24px));max-height:min(88vh,780px);overflow:auto;padding:20px!important;border:1px solid #e8bf6b66!important;border-radius:22px!important;background:radial-gradient(ellipse at 90% 0%,#267cb833,transparent 40%),linear-gradient(145deg,#102a43,#071522 78%)!important;box-shadow:0 24px 70px #0009!important}
+.fc-lecturer-form .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.fc-lecturer-form h2{margin:8px 0;font-size:23px;line-height:1.5;color:#f8f5ee}
+.fc-lecturer-form form{display:grid;gap:14px;margin-top:18px}
+.fc-lecturer-form .field{display:grid;gap:7px}
+.fc-lecturer-form .field label{color:#dce8f5;font-size:13px;font-weight:700}
+.fc-lecturer-form .input{width:100%;min-height:48px;border:1px solid #8db9e755;border-radius:13px;background:#061321;color:#f6f7fb;padding:12px 13px;font:inherit}
+.fc-lecturer-form .input:focus{outline:2px solid #e8bf6b;outline-offset:2px}
+.fc-lecturer-form .muted{font-size:12px;line-height:1.8;color:#a9bdd1}
+.fc-lecturer-form button:disabled{opacity:.65;cursor:wait}
+@media(max-width:560px){.fc-lecturer-form{padding:15px!important;border-radius:18px!important;max-height:90dvh}.fc-lecturer-form h2{font-size:20px}.fc-lecturer-form .input{min-height:46px}}

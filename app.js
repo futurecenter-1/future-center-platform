@@ -1,7 +1,7 @@
 const C=window.FC_CONFIG||{};const API=(C.supabaseUrl||'').replace(/\/$/,'');const KEY=C.supabaseKey||'';let session=null,siteSettings={},state={role:null,view:'home',data:{}},renderSequence=0;
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 function toast(msg,type=''){const d=document.createElement('div');d.className='toast '+type;d.textContent=msg;document.querySelector('#toast').appendChild(d);setTimeout(()=>d.remove(),3000)}
-async function api(path,opts={}){const h={'apikey':KEY,'Authorization':`Bearer ${session?.access_token||KEY}`,'Content-Type':'application/json',...(opts.headers||{})};const r=await fetch(API+'/rest/v1/'+path,{...opts,headers:h});if(!r.ok){let t=await r.text();throw Error(t||r.statusText)}return r.status===204?null:r.json()}
+async function api(path,opts={}){const h={'apikey':KEY,'Authorization':`Bearer ${session?.access_token||KEY}`,'Content-Type':'application/json',...(opts.headers||{})};const r=await fetch(API+'/rest/v1/'+path,{...opts,headers:h});const text=await r.text();if(!r.ok){let message=text;try{const j=text?JSON.parse(text):null;message=j?.message||j?.details||j?.hint||j?.error_description||text}catch{}throw Error(message||r.statusText||('HTTP '+r.status))}if(!text.trim())return null;try{return JSON.parse(text)}catch{throw Error('استجابة غير متوقعة من الخادم (HTTP '+r.status+')')}}
 async function storageRequest(path,opts={}){const r=await fetch(API+'/storage/v1/'+path,{...opts,headers:{apikey:KEY,Authorization:'Bearer '+(session?.access_token||KEY),...(opts.headers||{})}});const t=await r.text();if(!r.ok)throw Error(t||r.statusText);return t?JSON.parse(t):null}
 async function resolveLectureFileUrl(file){const raw=String(file.file_url||file.url||file.external_url||'');if(!raw||/^https:\/\//i.test(raw))return raw;if(!session?.access_token)return '';try{const r=await storageRequest('object/sign/lecture-assets/'+raw.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expiresIn:3600})});const p=r.signedURL||r.signedUrl||'';return p.startsWith('http')?p:API+'/storage/v1'+(p.startsWith('/')?p:'/'+p)}catch{return ''}}
 async function auth(path,body){const r=await fetch(API+'/auth/v1/'+path,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'حدث خطأ');return j}
@@ -232,19 +232,28 @@ async function lecturerPage(){
  }catch(e){return '<section class="hero card"><h2>تعذر تحميل لوحة المحاضر</h2><p class="muted">'+esc(e.message)+'</p></section>'}
 }
 async function createLecturerCourse(){
- const name=prompt('اسم الكورس:');if(name===null)return;if(!name.trim()){toast('اكتب اسم الكورس','err');return}
- const code=prompt('كود الكورس (اختياري):','')||'';
  try{
-  const me=await api('lecturers?select=id,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');if(!me.length)throw Error('حساب المحاضر غير مكتمل');
+  const me=await api('lecturers?select=id,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');
+  if(!me.length)throw Error('حساب المحاضر غير مكتمل');
   const stages=await api('stages?select=id,name,active&active=eq.true&order=id.asc');
   if(!stages.length)throw Error('لا توجد مراحل دراسية نشطة. اطلب من الإدارة إضافة مرحلة دراسية أولًا.');
-  let stage=stages[0];
-  if(stages.length>1){const opts=stages.map((x,i)=>(i+1)+'. '+x.name).join('\\n');const n=Number(prompt('اختار المرحلة الدراسية للكورس:\\n'+opts,'1'));if(!Number.isInteger(n)||n<1||n>stages.length)return;stage=stages[n-1]}
-  const body={name:name.trim(),code:code.trim()||null,stage_id:stage.id,lecturer_id:me[0].id,active:true,is_public:false};
+  const modal=document.querySelector('#lecturerCourseModal');modal?.remove();
+  const html='<div class="modal" id="lecturerCourseModal"><div class="card fc-lecturer-form"><div class="row"><div><span class="fc-lecturer-eyebrow">LECTURER STUDIO</span><h2>إضافة كورس جديد</h2></div><button type="button" class="btn secondary" onclick="document.querySelector(\'#lecturerCourseModal\')?.remove()">×</button></div><p class="muted">أدخل بيانات الكورس، وبعد الحفظ تقدر تضيف المحاضرات.</p><form onsubmit="submitLecturerCourseForm(event)"><div class="field"><label for="lecturerCourseName">اسم الكورس</label><input id="lecturerCourseName" class="input" name="name" required maxlength="160" placeholder="مثال: مبادئ المحاسبة"></div><div class="field"><label for="lecturerCourseCode">كود الكورس (اختياري)</label><input id="lecturerCourseCode" class="input" name="code" maxlength="60" placeholder="مثال: ACC101"></div><div class="field"><label for="lecturerCourseStage">المرحلة الدراسية</label><select id="lecturerCourseStage" class="input" name="stage_id" required>'+stages.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('')+'</select></div><p class="muted">سيُنشأ الكورس بشكل غير عام افتراضيًا.</p><button class="btn primary btn-wide" type="submit">حفظ الكورس</button></form></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+ }catch(e){toast('تعذر فتح نموذج الكورس: '+(e.message||'خطأ غير معروف'),'err')}
+}
+async function submitLecturerCourseForm(e){
+ e.preventDefault();const form=e.target;const fd=new FormData(form);const name=String(fd.get('name')||'').trim();const code=String(fd.get('code')||'').trim();const stageId=String(fd.get('stage_id')||'');
+ if(!name||!stageId){toast('اكتب اسم الكورس واختار المرحلة','err');return}
+ const button=form.querySelector('button[type="submit"]');if(button){button.disabled=true;button.textContent='جاري الحفظ…'}
+ try{
+  const me=await api('lecturers?select=id,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');if(!me.length)throw Error('حساب المحاضر غير مكتمل');
+  const stages=await api('stages?select=id&active=eq.true&id=eq.'+encodeURIComponent(stageId)+'&limit=1');if(!stages.length)throw Error('المرحلة المختارة غير متاحة');
+  const body={name,code:code||null,stage_id:stageId,lecturer_id:me[0].id,active:true,is_public:false};
   const rows=await api('courses',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(body)});const row=Array.isArray(rows)?rows[0]:rows;
   if(!row?.id)throw Error('لم يتم إرجاع بيانات الكورس؛ راجع صلاحيات إضافة الكورسات');
-  toast('تم إنشاء الكورس. يمكنك الآن إضافة المحاضرات.','ok');go('lecturercourse',row.id);
- }catch(e){toast('تعذر إنشاء الكورس: '+(e.message||'خطأ غير معروف'),'err')}
+  document.querySelector('#lecturerCourseModal')?.remove();toast('تم إنشاء الكورس بنجاح','ok');go('lecturercourse',row.id);
+ }catch(err){if(button){button.disabled=false;button.textContent='حفظ الكورس'}toast('تعذر إنشاء الكورس: '+(err.message||'خطأ غير معروف'),'err')}
 }
 async function createLecturerLecturePrompt(){
  try{
