@@ -278,9 +278,9 @@ async function createLecturerLecture(courseId){
  try{
   const me=await api('lecturers?select=id,active&auth_user_id=eq.'+encodeURIComponent(session.user.id)+'&active=eq.true&limit=1');
   if(!me.length)throw Error('حساب المحاضر غير مكتمل');
-  const owned=await api('courses?select=id,lecturer_id&id=eq.'+encodeURIComponent(courseId)+'&lecturer_id=eq.'+encodeURIComponent(me[0].id)+'&active=eq.true&limit=1');
+  const owned=await api('courses?select=id,lecturer_id,is_public&id=eq.'+encodeURIComponent(courseId)+'&lecturer_id=eq.'+encodeURIComponent(me[0].id)+'&active=eq.true&limit=1');
   if(!owned.length)throw Error('الكورس غير مرتبط بحسابك أو غير نشط');
-  const body={title:title.trim(),description:description.trim()||null,lecture_number:n,active:true,is_public:false,course_id:Number(courseId),lecturer_id:me[0].id};
+  const body={title:title.trim(),description:description.trim()||null,lecture_number:n,active:true,is_public:owned[0].is_public===true,course_id:Number(courseId),lecturer_id:me[0].id};
   const result=await api('lectures',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(body)});
   const created=Array.isArray(result)?result[0]:result;
   if(!created?.id)throw Error('تم إرسال الطلب لكن لم يتم إرجاع المحاضرة؛ حدّث الصفحة وتحقق من القائمة');
